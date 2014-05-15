@@ -10,7 +10,7 @@ import (
 
 type Painter interface {
 	Paint()
-	Resize(w, h int)
+	SetSize(w, h int)
 	GetCanvas() *Canvas
 }
 
@@ -69,7 +69,7 @@ func initInternalEventsProxying() {
 			tbEvent := <-internalEvents
 			if tbEvent.Type == termbox.EventResize {
 				ClearDefault()
-				root.Resize(tbEvent.Width, tbEvent.Height)
+				root.SetSize(tbEvent.Width, tbEvent.Height)
 			}
 			Events <- Event{tbEvent}
 		}
@@ -103,7 +103,7 @@ func SetPainter(p Painter) {
 	defer log.Trace.PrintLeave()
 
 	root.Delegate = p
-	root.Delegate.Resize(root.Width, root.Height)
+	root.Delegate.SetSize(root.Width, root.Height)
 }
 
 func PaintToBuffer() {

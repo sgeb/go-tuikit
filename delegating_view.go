@@ -23,16 +23,18 @@ func (v *DelegatingView) Paint() {
 
 	if v.Delegate != nil {
 		v.Delegate.Paint()
-		v.Canvas.Buffer.Blit(v.Rect, 0, 0, &v.Delegate.GetCanvas().Buffer)
+		v.Blit(v.Rect, 0, 0, &v.Delegate.GetCanvas().Buffer)
 	}
 }
 
-func (v *DelegatingView) Resize(w, h int) {
+func (v *DelegatingView) SetSize(w, h int) {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
 	if v.Width != w || v.Height != h {
-		v.Buffer.Resize(w, h)
+		v.Resize(w, h)
 		v.Dirty = true
+
+		v.Delegate.SetSize(w, h)
 	}
 }
