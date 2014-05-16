@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 
+	termbox "github.com/nsf/termbox-go"
 	"github.com/nsf/tulib"
 	log "github.com/sgeb/go-sglog"
-	termbox "github.com/nsf/termbox-go"
 )
 
 type TextView struct {
@@ -53,7 +53,7 @@ func (v *TextView) Paint() {
 		return
 	}
 
-	v.Fill(v.Rect, termbox.Cell{Ch:' '})
+	v.Fill(v.Rect, termbox.Cell{Ch: ' '})
 	v.DrawLabel(v.Rect, v.params, v.text)
 	v.Dirty = false
 }

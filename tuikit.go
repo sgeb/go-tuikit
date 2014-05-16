@@ -2,6 +2,7 @@ package tuikit
 
 import (
 	"fmt"
+	"sync"
 
 	termbox "github.com/nsf/termbox-go"
 	"github.com/nsf/tulib"
@@ -31,6 +32,9 @@ var (
 	// Controls event polling
 	internalEvents chan termbox.Event = make(chan termbox.Event, 20)
 	stopPolling    chan struct{}      = make(chan struct{}, 1)
+
+	// Lock on screen drawing
+	mutex sync.Mutex
 )
 
 func Init() error {
@@ -122,9 +126,11 @@ func Sync() error {
 
 	// Strangely need to set cursor to valid position before sync and hide it
 	// afterwards for it to really disappear
-	termbox.SetCursor(0,0)
+	mutex.Lock()
+	termbox.SetCursor(0, 0)
 	err := termbox.Sync()
 	termbox.HideCursor()
+	mutex.Unlock()
 	return err
 }
 
@@ -132,28 +138,35 @@ func clearWithDefaultColors() error {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	err := clear(termbox.ColorDefault, termbox.ColorDefault)
-	root.Buffer = tulib.TermboxBuffer()
-	return err
+	return clear(termbox.ColorDefault, termbox.ColorDefault)
 }
 
 func clear(fg, bg termbox.Attribute) error {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	return termbox.Clear(fg, bg)
+	mutex.Lock()
+	err := termbox.Clear(fg, bg)
+	root.Buffer = tulib.TermboxBuffer()
+	mutex.Unlock()
+	return err
 }
 
 func Flush() error {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	return termbox.Flush()
+	mutex.Lock()
+	err := termbox.Flush()
+	mutex.Unlock()
+	return err
 }
 
 func Close() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
+	mutex.Lock()
 	termbox.Close()
+	mutex.Unlock()
 }
