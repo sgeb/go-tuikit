@@ -64,6 +64,7 @@ func (v *AnchoringView) SetSize(w, h int) {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
+	log.Debug.Println("New size w,h:", w, h)
 	if v.Width != w || v.Height != h {
 		v.Resize(w, h)
 		v.Dirty = true
@@ -112,4 +113,12 @@ func (v *AnchoringView) GetCanvas() *Canvas {
 	defer log.Trace.PrintLeave()
 
 	return v.Canvas
+}
+
+func (v *AnchoringView) SetMain(nMain Painter) {
+	log.Trace.PrintEnter()
+	defer log.Trace.PrintLeave()
+
+	nMain.SetSize(v.mainRect.Width, v.mainRect.Height)
+	v.main = nMain
 }

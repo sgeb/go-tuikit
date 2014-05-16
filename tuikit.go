@@ -44,6 +44,7 @@ func Init() error {
 
 	createRootView()
 	termbox.SetInputMode(termbox.InputAlt)
+	termbox.HideCursor()
 
 	initInternalEventsProxying()
 	StartEventPolling()
@@ -57,7 +58,7 @@ func createRootView() {
 
 	// Create it with empty size initially
 	root = NewDelegatingView(0, 0)
-	root.Buffer = tulib.TermboxBuffer()
+	clearWithDefaultColors()
 }
 
 func initInternalEventsProxying() {
@@ -68,8 +69,10 @@ func initInternalEventsProxying() {
 		for {
 			tbEvent := <-internalEvents
 			if tbEvent.Type == termbox.EventResize {
-				ClearDefault()
+				log.Debug.Println("Received Resize event, clearing screen " +
+					"and setting new size")
 				root.SetSize(tbEvent.Width, tbEvent.Height)
+				clearWithDefaultColors()
 			}
 			Events <- Event{tbEvent}
 		}
@@ -117,17 +120,24 @@ func Sync() error {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	return termbox.Sync()
+	// Strangely need to set cursor to valid position before sync and hide it
+	// afterwards for it to really disappear
+	termbox.SetCursor(0,0)
+	err := termbox.Sync()
+	termbox.HideCursor()
+	return err
 }
 
-func ClearDefault() error {
+func clearWithDefaultColors() error {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	return Clear(termbox.ColorDefault, termbox.ColorDefault)
+	err := clear(termbox.ColorDefault, termbox.ColorDefault)
+	root.Buffer = tulib.TermboxBuffer()
+	return err
 }
 
-func Clear(fg, bg termbox.Attribute) error {
+func clear(fg, bg termbox.Attribute) error {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
