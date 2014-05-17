@@ -15,8 +15,15 @@ type Painter interface {
 	GetCanvas() *Canvas
 }
 
+type EventHandler interface {
+	// HandleEvent should set Event.Handled to true if it was
+	// handled so that the main loop knows to ignores it
+	HandleEvent(*Event)
+}
+
 type Event struct {
-	termbox.Event
+	*termbox.Event
+	Handled bool
 }
 
 type Buffer struct {
@@ -24,7 +31,8 @@ type Buffer struct {
 }
 
 var (
-	root *DelegatingView
+	root         *DelegatingView
+	inputHandler EventHandler
 
 	// Event polling channel
 	Events chan Event = make(chan Event, 20)
@@ -72,13 +80,20 @@ func initInternalEventsProxying() {
 	go func() {
 		for {
 			tbEvent := <-internalEvents
-			if tbEvent.Type == termbox.EventResize {
+			ev := Event{Event: &tbEvent, Handled: false}
+
+			switch {
+			case ev.Type == termbox.EventResize:
 				log.Debug.Println("Received Resize event, clearing screen " +
 					"and setting new size")
-				root.SetSize(tbEvent.Width, tbEvent.Height)
+				root.SetSize(ev.Width, ev.Height)
 				clearWithDefaultColors()
+				ev.Handled = true
+			case ev.Type == termbox.EventKey && inputHandler != nil:
+				inputHandler.HandleEvent(&ev)
 			}
-			Events <- Event{tbEvent}
+
+			Events <- ev
 		}
 	}()
 }
@@ -113,6 +128,13 @@ func SetPainter(p Painter) {
 	root.Delegate.SetSize(root.Width, root.Height)
 }
 
+func SetInputHandler(eh EventHandler) {
+	log.Trace.PrintEnter()
+	defer log.Trace.PrintLeave()
+
+	inputHandler = eh
+}
+
 func PaintToBuffer() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
@@ -127,9 +149,9 @@ func Sync() error {
 	// Strangely need to set cursor to valid position before sync and hide it
 	// afterwards for it to really disappear
 	mutex.Lock()
-	termbox.SetCursor(0, 0)
+	SetCursor(0, 0)
 	err := termbox.Sync()
-	termbox.HideCursor()
+	HideCursor()
 	mutex.Unlock()
 	return err
 }
@@ -150,6 +172,20 @@ func clear(fg, bg termbox.Attribute) error {
 	root.Buffer = tulib.TermboxBuffer()
 	mutex.Unlock()
 	return err
+}
+
+func HideCursor() {
+	log.Trace.PrintEnter()
+	defer log.Trace.PrintLeave()
+
+	termbox.HideCursor()
+}
+
+func SetCursor(x, y int) {
+	log.Trace.PrintEnter()
+	defer log.Trace.PrintLeave()
+
+	termbox.SetCursor(x, y)
 }
 
 func Flush() error {
