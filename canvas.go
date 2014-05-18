@@ -7,7 +7,8 @@ import (
 
 type Canvas struct {
 	tulib.Buffer
-	Dirty bool
+	Cursor Point
+	Dirty  bool
 }
 
 func NewCanvas(w, h int) *Canvas {
@@ -17,5 +18,6 @@ func NewCanvas(w, h int) *Canvas {
 	return &Canvas{
 		Buffer: tulib.NewBuffer(w, h),
 		Dirty:  true,
+		Cursor: PointHidden,
 	}
 }

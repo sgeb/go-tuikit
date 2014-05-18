@@ -24,6 +24,11 @@ func (v *DelegatingView) Paint() {
 	if v.Delegate != nil {
 		v.Delegate.Paint()
 		v.Blit(v.Rect, 0, 0, &v.Delegate.GetCanvas().Buffer)
+
+		c := v.Delegate.GetCanvas().Cursor
+		if !c.Hidden() {
+			v.Cursor = c
+		}
 	}
 }
 

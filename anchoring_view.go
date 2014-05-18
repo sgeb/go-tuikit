@@ -50,11 +50,21 @@ func (v *AnchoringView) Paint() {
 	if v.anchor != nil {
 		v.anchor.Paint()
 		v.Blit(v.anchorRect, 0, 0, &v.anchor.GetCanvas().Buffer)
+
+		c := v.anchor.GetCanvas().Cursor
+		if !c.Hidden() {
+			v.Cursor = c.Add(NewPoint(v.anchorRect.X, v.anchorRect.Y))
+		}
 	}
 
 	if v.main != nil {
 		v.main.Paint()
 		v.Blit(v.mainRect, 0, 0, &v.main.GetCanvas().Buffer)
+
+		c := v.main.GetCanvas().Cursor
+		if !c.Hidden() {
+			v.Cursor = c.Add(NewPoint(v.mainRect.X, v.mainRect.Y))
+		}
 	}
 }
 

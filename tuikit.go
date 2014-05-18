@@ -31,8 +31,8 @@ type Buffer struct {
 }
 
 var (
-	root         *DelegatingView
-	inputHandler EventHandler
+	root           *DelegatingView
+	firstResponder EventHandler
 
 	// Event polling channel
 	Events chan Event = make(chan Event, 20)
@@ -89,8 +89,8 @@ func initInternalEventsProxying() {
 				root.SetSize(ev.Width, ev.Height)
 				clearWithDefaultColors()
 				ev.Handled = true
-			case ev.Type == termbox.EventKey && inputHandler != nil:
-				inputHandler.HandleEvent(&ev)
+			case ev.Type == termbox.EventKey && firstResponder != nil:
+				firstResponder.HandleEvent(&ev)
 			}
 
 			Events <- ev
@@ -128,11 +128,11 @@ func SetPainter(p Painter) {
 	root.Delegate.SetSize(root.Width, root.Height)
 }
 
-func SetInputHandler(eh EventHandler) {
+func SetFirstResponder(eh EventHandler) {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	inputHandler = eh
+	firstResponder = eh
 }
 
 func PaintToBuffer() {
@@ -140,6 +140,9 @@ func PaintToBuffer() {
 	defer log.Trace.PrintLeave()
 
 	root.Paint()
+	if firstResponder != nil {
+		SetCursor(root.Cursor)
+	}
 }
 
 func Sync() error {
@@ -149,9 +152,9 @@ func Sync() error {
 	// Strangely need to set cursor to valid position before sync and hide it
 	// afterwards for it to really disappear
 	mutex.Lock()
-	SetCursor(0, 0)
+	SetCursor(PointZero)
 	err := termbox.Sync()
-	HideCursor()
+	SetCursor(root.Cursor)
 	mutex.Unlock()
 	return err
 }
@@ -181,11 +184,11 @@ func HideCursor() {
 	termbox.HideCursor()
 }
 
-func SetCursor(x, y int) {
+func SetCursor(p Point) {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	termbox.SetCursor(x, y)
+	termbox.SetCursor(p.X, p.Y)
 }
 
 func Flush() error {

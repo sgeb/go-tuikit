@@ -11,8 +11,8 @@ import (
 type TextInputWidget struct {
 	*Canvas
 
-	text   []byte
-	cursor int
+	text []byte
+	pos  int
 
 	runeBytes [utf8.UTFMax]byte
 }
@@ -69,7 +69,7 @@ func (v *TextInputWidget) append(r rune) {
 		v.text = append(v.text, v.runeBytes[0:n]...)
 	}
 
-	v.cursor++
+	v.pos++
 	v.Dirty = true
 }
 
@@ -77,9 +77,9 @@ func (v *TextInputWidget) backspace() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if v.cursor > 0 {
-		v.text = append(v.text[:v.cursor-1], v.text[v.cursor:]...)
-		v.cursor--
+	if v.pos > 0 {
+		v.text = append(v.text[:v.pos-1], v.text[v.pos:]...)
+		v.pos--
 		v.Dirty = true
 	}
 }
@@ -88,8 +88,8 @@ func (v *TextInputWidget) delete() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if v.cursor < len(v.text) {
-		v.text = append(v.text[:v.cursor], v.text[v.cursor+1:]...)
+	if v.pos < len(v.text) {
+		v.text = append(v.text[:v.pos], v.text[v.pos+1:]...)
 		v.Dirty = true
 	}
 }
@@ -98,8 +98,8 @@ func (v *TextInputWidget) moveLeft() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if v.cursor > 0 {
-		v.cursor--
+	if v.pos > 0 {
+		v.pos--
 		v.Dirty = true
 	}
 }
@@ -108,8 +108,8 @@ func (v *TextInputWidget) moveRight() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if v.cursor < len(v.text) {
-		v.cursor++
+	if v.pos < len(v.text) {
+		v.pos++
 		v.Dirty = true
 	}
 }
@@ -141,10 +141,7 @@ func (v *TextInputWidget) Paint() {
 
 	v.Fill(v.Rect, termbox.Cell{Ch: ' '})
 	v.DrawLabel(v.Rect, &tulib.DefaultLabelParams, v.text)
-
-	// TODO: implement cursor setting
-	SetCursor(v.cursor, 2)
-
+	v.Cursor = NewPoint(v.pos, 0)
 	v.Dirty = false
 }
 
