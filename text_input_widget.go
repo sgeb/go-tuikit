@@ -47,10 +47,12 @@ func (v *TextInputWidget) HandleEvent(ev *Event) {
 		v.backspace()
 	case ev.Key == termbox.KeyDelete:
 		v.delete()
-	case ev.Key == termbox.KeyArrowLeft:
+	case ev.Key == termbox.KeyArrowLeft || ev.Key == termbox.KeyCtrlB:
 		v.moveLeft()
-	case ev.Key == termbox.KeyArrowRight:
+	case ev.Key == termbox.KeyArrowRight || ev.Key == termbox.KeyCtrlF:
 		v.moveRight()
+	case ev.Key == termbox.KeyCtrlU:
+		v.killLine()
 	default:
 		handled = false
 	}
@@ -110,6 +112,17 @@ func (v *TextInputWidget) moveRight() {
 
 	if v.pos < len(v.text) {
 		v.pos++
+		v.Dirty = true
+	}
+}
+
+func (v *TextInputWidget) killLine() {
+	log.Trace.PrintEnter()
+	defer log.Trace.PrintLeave()
+
+	if len(v.text) > 0 {
+		v.text = []byte(nil)
+		v.pos = 0
 		v.Dirty = true
 	}
 }
