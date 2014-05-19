@@ -44,17 +44,23 @@ func (w *TextWidget) HandleEvent(ev *Event) {
 	case ev.Key == termbox.KeySpace:
 		w.append(' ')
 	case ev.Key == termbox.KeyBackspace || ev.Key == termbox.KeyBackspace2:
-		w.backspace()
+		w.deleteNextChar()
 	case ev.Key == termbox.KeyDelete:
-		w.delete()
+		w.deletePrevChar()
 	case ev.Key == termbox.KeyArrowLeft || ev.Key == termbox.KeyCtrlB:
 		w.moveLeft()
 	case ev.Key == termbox.KeyArrowRight || ev.Key == termbox.KeyCtrlF:
 		w.moveRight()
+	case ev.Key == termbox.KeyHome || ev.Key == termbox.KeyCtrlA:
+		w.moveHome()
+	case ev.Key == termbox.KeyEnd || ev.Key == termbox.KeyCtrlE:
+		w.moveEnd()
 	case ev.Key == termbox.KeyCtrlU:
-		w.killLine()
+		w.deleteLine()
 	case ev.Key == termbox.KeyCtrlK:
-		w.killToEol()
+		w.deleteToEol()
+	case ev.Key == termbox.KeyCtrlW:
+		w.deletePrevWord()
 	default:
 		handled = false
 	}
@@ -80,23 +86,23 @@ func (w *TextWidget) append(r rune) {
 	w.Dirty = true
 }
 
-func (w *TextWidget) backspace() {
+func (w *TextWidget) deletePrevChar() {
+	log.Trace.PrintEnter()
+	defer log.Trace.PrintLeave()
+
+	if w.pos < len(w.text) {
+		w.text = append(w.text[:w.pos], w.text[w.pos+1:]...)
+		w.Dirty = true
+	}
+}
+
+func (w *TextWidget) deleteNextChar() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
 	if w.pos > 0 {
 		w.text = append(w.text[:w.pos-1], w.text[w.pos:]...)
 		w.pos--
-		w.Dirty = true
-	}
-}
-
-func (w *TextWidget) delete() {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
-	if w.pos < len(w.text) {
-		w.text = append(w.text[:w.pos], w.text[w.pos+1:]...)
 		w.Dirty = true
 	}
 }
@@ -121,7 +127,27 @@ func (w *TextWidget) moveRight() {
 	}
 }
 
-func (w *TextWidget) killLine() {
+func (w *TextWidget) moveHome() {
+	log.Trace.PrintEnter()
+	defer log.Trace.PrintLeave()
+
+	if w.pos > 0 {
+		w.pos = 0
+		w.Dirty = true
+	}
+}
+
+func (w *TextWidget) moveEnd() {
+	log.Trace.PrintEnter()
+	defer log.Trace.PrintLeave()
+
+	if w.pos < len(w.text) {
+		w.pos = len(w.text)
+		w.Dirty = true
+	}
+}
+
+func (w *TextWidget) deleteLine() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
@@ -132,12 +158,32 @@ func (w *TextWidget) killLine() {
 	}
 }
 
-func (w *TextWidget) killToEol() {
+func (w *TextWidget) deleteToEol() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
 	if len(w.text) > 0 {
 		w.text = w.text[:w.pos]
+		w.Dirty = true
+	}
+}
+
+func (w *TextWidget) deletePrevWord() {
+	log.Trace.PrintEnter()
+	defer log.Trace.PrintLeave()
+
+	if w.pos > 0 {
+		nPos := w.pos
+
+		for nPos > 0 && w.text[nPos-1] == ' ' {
+			nPos--
+		}
+		for nPos > 0 && w.text[nPos-1] != ' ' {
+			nPos--
+		}
+
+		w.text = append(w.text[:nPos], w.text[w.pos:]...)
+		w.pos = nPos
 		w.Dirty = true
 	}
 }
