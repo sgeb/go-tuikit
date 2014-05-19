@@ -66,12 +66,15 @@ func (w *TextWidget) append(r rune) {
 	defer log.Trace.PrintLeave()
 
 	log.Debug.Printf("Rune: %v (%v)", r, string(r))
+	var b []byte
 	if r < utf8.RuneSelf {
-		w.text = append(w.text, byte(r))
+		b = append(b, byte(r))
 	} else {
-		n := utf8.EncodeRune(w.runeBytes[0:], r)
-		w.text = append(w.text, w.runeBytes[0:n]...)
+		n := utf8.EncodeRune(w.runeBytes[:], r)
+		b = w.runeBytes[:n]
 	}
+
+	w.text = append(append(w.text[:w.pos], b...), w.text[w.pos:]...)
 
 	w.pos++
 	w.Dirty = true
