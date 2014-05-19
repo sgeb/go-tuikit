@@ -8,7 +8,7 @@ import (
 	log "github.com/sgeb/go-sglog"
 )
 
-type TextInputWidget struct {
+type TextWidget struct {
 	*Canvas
 
 	text []byte
@@ -17,11 +17,11 @@ type TextInputWidget struct {
 	runeBytes [utf8.UTFMax]byte
 }
 
-func NewTextInputWidget() *TextInputWidget {
+func NewTextWidget() *TextWidget {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	return &TextInputWidget{
+	return &TextWidget{
 		Canvas: NewCanvas(0, 0),
 
 		// will grow as needed
@@ -29,7 +29,7 @@ func NewTextInputWidget() *TextInputWidget {
 	}
 }
 
-func (v *TextInputWidget) HandleEvent(ev *Event) {
+func (w *TextWidget) HandleEvent(ev *Event) {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
@@ -40,149 +40,149 @@ func (v *TextInputWidget) HandleEvent(ev *Event) {
 	handled := true
 	switch {
 	case ev.Ch != 0:
-		v.append(ev.Ch)
+		w.append(ev.Ch)
 	case ev.Key == termbox.KeySpace:
-		v.append(' ')
+		w.append(' ')
 	case ev.Key == termbox.KeyBackspace || ev.Key == termbox.KeyBackspace2:
-		v.backspace()
+		w.backspace()
 	case ev.Key == termbox.KeyDelete:
-		v.delete()
+		w.delete()
 	case ev.Key == termbox.KeyArrowLeft || ev.Key == termbox.KeyCtrlB:
-		v.moveLeft()
+		w.moveLeft()
 	case ev.Key == termbox.KeyArrowRight || ev.Key == termbox.KeyCtrlF:
-		v.moveRight()
+		w.moveRight()
 	case ev.Key == termbox.KeyCtrlU:
-		v.killLine()
+		w.killLine()
 	case ev.Key == termbox.KeyCtrlK:
-		v.killToEol()
+		w.killToEol()
 	default:
 		handled = false
 	}
 	ev.Handled = handled
 }
 
-func (v *TextInputWidget) append(r rune) {
+func (w *TextWidget) append(r rune) {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
 	log.Debug.Printf("Rune: %v (%v)", r, string(r))
 	if r < utf8.RuneSelf {
-		v.text = append(v.text, byte(r))
+		w.text = append(w.text, byte(r))
 	} else {
-		n := utf8.EncodeRune(v.runeBytes[0:], r)
-		v.text = append(v.text, v.runeBytes[0:n]...)
+		n := utf8.EncodeRune(w.runeBytes[0:], r)
+		w.text = append(w.text, w.runeBytes[0:n]...)
 	}
 
-	v.pos++
-	v.Dirty = true
+	w.pos++
+	w.Dirty = true
 }
 
-func (v *TextInputWidget) backspace() {
+func (w *TextWidget) backspace() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if v.pos > 0 {
-		v.text = append(v.text[:v.pos-1], v.text[v.pos:]...)
-		v.pos--
-		v.Dirty = true
+	if w.pos > 0 {
+		w.text = append(w.text[:w.pos-1], w.text[w.pos:]...)
+		w.pos--
+		w.Dirty = true
 	}
 }
 
-func (v *TextInputWidget) delete() {
+func (w *TextWidget) delete() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if v.pos < len(v.text) {
-		v.text = append(v.text[:v.pos], v.text[v.pos+1:]...)
-		v.Dirty = true
+	if w.pos < len(w.text) {
+		w.text = append(w.text[:w.pos], w.text[w.pos+1:]...)
+		w.Dirty = true
 	}
 }
 
-func (v *TextInputWidget) moveLeft() {
+func (w *TextWidget) moveLeft() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if v.pos > 0 {
-		v.pos--
-		v.Dirty = true
+	if w.pos > 0 {
+		w.pos--
+		w.Dirty = true
 	}
 }
 
-func (v *TextInputWidget) moveRight() {
+func (w *TextWidget) moveRight() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if v.pos < len(v.text) {
-		v.pos++
-		v.Dirty = true
+	if w.pos < len(w.text) {
+		w.pos++
+		w.Dirty = true
 	}
 }
 
-func (v *TextInputWidget) killLine() {
+func (w *TextWidget) killLine() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if len(v.text) > 0 {
-		v.text = []byte(nil)
-		v.pos = 0
-		v.Dirty = true
+	if len(w.text) > 0 {
+		w.text = []byte(nil)
+		w.pos = 0
+		w.Dirty = true
 	}
 }
 
-func (v *TextInputWidget) killToEol() {
+func (w *TextWidget) killToEol() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if len(v.text) > 0 {
-		v.text = v.text[:v.pos]
-		v.Dirty = true
+	if len(w.text) > 0 {
+		w.text = w.text[:w.pos]
+		w.Dirty = true
 	}
 }
 
-func (v *TextInputWidget) Paint() {
+func (w *TextWidget) Paint() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if !v.Dirty {
+	if !w.Dirty {
 		log.Debug.Println("Not dirty, early return")
 		return
 	}
 
 	// TODO: implement scrolling
 	//	start := 0
-	//	pos := v.pos
-	//	len := v.len
+	//	pos := w.pos
+	//	len := w.len
 	//
-	//	for pos >= v.Width {
+	//	for pos >= w.Width {
 	//		start++
 	//		pos--
 	//		len--
 	//	}
-	//	for len > v.Width {
+	//	for len > w.Width {
 	//		len--
 	//	}
 
-	log.Debug.Printf("Text: %v (len: %v)", string(v.text), len(v.text))
+	log.Debug.Printf("Text: %v (len: %v)", string(w.text), len(w.text))
 
-	v.Fill(v.Rect, termbox.Cell{Ch: ' '})
-	v.DrawLabel(v.Rect, &tulib.DefaultLabelParams, v.text)
-	v.Cursor = NewPoint(v.pos, 0)
-	v.Dirty = false
+	w.Fill(w.Rect, termbox.Cell{Ch: ' '})
+	w.DrawLabel(w.Rect, &tulib.DefaultLabelParams, w.text)
+	w.Cursor = NewPoint(w.pos, 0)
+	w.Dirty = false
 }
 
-func (v *TextInputWidget) SetSize(w, h int) {
+func (w *TextWidget) SetSize(nw, nh int) {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if v.Width != w || v.Height != h {
-		v.Buffer.Resize(w, h)
-		v.Dirty = true
+	if w.Width != nw || w.Height != nh {
+		w.Buffer.Resize(nw, nh)
+		w.Dirty = true
 	}
 }
 
-func (v *TextInputWidget) GetCanvas() *Canvas {
+func (w *TextWidget) GetCanvas() *Canvas {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	return v.Canvas
+	return w.Canvas
 }
