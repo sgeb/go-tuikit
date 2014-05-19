@@ -53,6 +53,8 @@ func (v *TextInputWidget) HandleEvent(ev *Event) {
 		v.moveRight()
 	case ev.Key == termbox.KeyCtrlU:
 		v.killLine()
+	case ev.Key == termbox.KeyCtrlK:
+		v.killToEol()
 	default:
 		handled = false
 	}
@@ -123,6 +125,16 @@ func (v *TextInputWidget) killLine() {
 	if len(v.text) > 0 {
 		v.text = []byte(nil)
 		v.pos = 0
+		v.Dirty = true
+	}
+}
+
+func (v *TextInputWidget) killToEol() {
+	log.Trace.PrintEnter()
+	defer log.Trace.PrintLeave()
+
+	if len(v.text) > 0 {
+		v.text = v.text[:v.pos]
 		v.Dirty = true
 	}
 }
