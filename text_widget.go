@@ -40,28 +40,32 @@ func (w *TextWidget) HandleEvent(ev *Event) {
 
 	handled := true
 	switch {
-	case ev.Ch != 0:
+	case ev.Ch != 0 && ev.Mod&termbox.ModAlt == 0:
 		w.insertAtCursor(ev.Ch)
 	case ev.Key == termbox.KeySpace:
 		w.insertAtCursor(' ')
 	case ev.Key == termbox.KeyBackspace || ev.Key == termbox.KeyBackspace2:
-		w.deleteLeftChar()
+		w.deleteCharLeft()
 	case ev.Key == termbox.KeyDelete:
-		w.deleteRightChar()
+		w.deleteCharRight()
 	case ev.Key == termbox.KeyArrowLeft || ev.Key == termbox.KeyCtrlB:
-		w.moveLeft()
+		w.moveCharLeft()
 	case ev.Key == termbox.KeyArrowRight || ev.Key == termbox.KeyCtrlF:
-		w.moveRight()
+		w.moveCharRight()
 	case ev.Key == termbox.KeyHome || ev.Key == termbox.KeyCtrlA:
 		w.moveHome()
 	case ev.Key == termbox.KeyEnd || ev.Key == termbox.KeyCtrlE:
 		w.moveEnd()
+	case ev.Ch == 'b' && ev.Mod&termbox.ModAlt == 1:
+		w.moveWordLeft()
+	case ev.Ch == 'f' && ev.Mod&termbox.ModAlt == 1:
+		w.moveWordRight()
 	case ev.Key == termbox.KeyCtrlU:
 		w.deleteLine()
 	case ev.Key == termbox.KeyCtrlK:
 		w.deleteToEol()
 	case ev.Key == termbox.KeyCtrlW:
-		w.deleteLeftWord()
+		w.deleteWordLeft()
 	default:
 		handled = false
 	}
@@ -102,7 +106,7 @@ func (w *TextWidget) insertAtCursor(r rune) {
 	w.Dirty = true
 }
 
-func (w *TextWidget) deleteLeftChar() {
+func (w *TextWidget) deleteCharLeft() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
@@ -115,7 +119,7 @@ func (w *TextWidget) deleteLeftChar() {
 	}
 }
 
-func (w *TextWidget) deleteRightChar() {
+func (w *TextWidget) deleteCharRight() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
@@ -126,7 +130,7 @@ func (w *TextWidget) deleteRightChar() {
 	}
 }
 
-func (w *TextWidget) moveLeft() {
+func (w *TextWidget) moveCharLeft() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
@@ -138,7 +142,7 @@ func (w *TextWidget) moveLeft() {
 	}
 }
 
-func (w *TextWidget) moveRight() {
+func (w *TextWidget) moveCharRight() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
@@ -172,7 +176,7 @@ func (w *TextWidget) moveEnd() {
 	}
 }
 
-func (w *TextWidget) getLeftWord() (textPos, cursorPos int) {
+func (w *TextWidget) getPosWordLeft() (textPos, cursorPos int) {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
@@ -192,12 +196,42 @@ func (w *TextWidget) getLeftWord() (textPos, cursorPos int) {
 	return
 }
 
-func (w *TextWidget) moveLeftWord() {
+func (w *TextWidget) getPosWordRight() (textPos, cursorPos int) {
+	log.Trace.PrintEnter()
+	defer log.Trace.PrintLeave()
+
+	textPos = w.textPos
+	cursorPos = w.cursorPos
+
+	for r, n := w.nextRune(textPos); textPos < len(w.text) && r == ' '; r, n = w.nextRune(textPos) {
+		textPos += n
+		cursorPos++
+	}
+
+	for r, n := w.nextRune(textPos); textPos < len(w.text) && r != ' '; r, n = w.nextRune(textPos) {
+		textPos += n
+		cursorPos++
+	}
+
+	return
+}
+
+func (w *TextWidget) moveWordLeft() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
 	if w.textPos > 0 {
-		w.textPos, w.cursorPos = w.getLeftWord()
+		w.textPos, w.cursorPos = w.getPosWordLeft()
+		w.Dirty = true
+	}
+}
+
+func (w *TextWidget) moveWordRight() {
+	log.Trace.PrintEnter()
+	defer log.Trace.PrintLeave()
+
+	if w.textPos < len(w.text) {
+		w.textPos, w.cursorPos = w.getPosWordRight()
 		w.Dirty = true
 	}
 }
@@ -224,12 +258,12 @@ func (w *TextWidget) deleteToEol() {
 	}
 }
 
-func (w *TextWidget) deleteLeftWord() {
+func (w *TextWidget) deleteWordLeft() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
 	if w.textPos > 0 {
-		ntPos, ncPos := w.getLeftWord()
+		ntPos, ncPos := w.getPosWordLeft()
 		w.text = append(w.text[:ntPos], w.text[w.textPos:]...)
 		w.textPos = ntPos
 		w.cursorPos = ncPos
