@@ -45,9 +45,9 @@ func (w *TextWidget) HandleEvent(ev *Event) {
 	case ev.Key == termbox.KeySpace:
 		w.insertAtCursor(' ')
 	case ev.Key == termbox.KeyBackspace || ev.Key == termbox.KeyBackspace2:
-		w.deletePrevChar()
+		w.deleteLeftChar()
 	case ev.Key == termbox.KeyDelete:
-		w.deleteNextChar()
+		w.deleteRightChar()
 	case ev.Key == termbox.KeyArrowLeft || ev.Key == termbox.KeyCtrlB:
 		w.moveLeft()
 	case ev.Key == termbox.KeyArrowRight || ev.Key == termbox.KeyCtrlF:
@@ -61,11 +61,21 @@ func (w *TextWidget) HandleEvent(ev *Event) {
 	case ev.Key == termbox.KeyCtrlK:
 		w.deleteToEol()
 	case ev.Key == termbox.KeyCtrlW:
-		w.deletePrevWord()
+		w.deleteLeftWord()
 	default:
 		handled = false
 	}
 	ev.Handled = handled
+}
+
+func (w *TextWidget) prevRune(pos int) (r rune, n int) {
+	r, n = utf8.DecodeLastRune(w.text[:pos])
+	return
+}
+
+func (w *TextWidget) nextRune(pos int) (r rune, n int) {
+	r, n = utf8.DecodeRune(w.text[pos:])
+	return
 }
 
 func (w *TextWidget) insertAtCursor(r rune) {
@@ -92,7 +102,7 @@ func (w *TextWidget) insertAtCursor(r rune) {
 	w.Dirty = true
 }
 
-func (w *TextWidget) deletePrevChar() {
+func (w *TextWidget) deleteLeftChar() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
@@ -105,7 +115,7 @@ func (w *TextWidget) deletePrevChar() {
 	}
 }
 
-func (w *TextWidget) deleteNextChar() {
+func (w *TextWidget) deleteRightChar() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
@@ -162,6 +172,36 @@ func (w *TextWidget) moveEnd() {
 	}
 }
 
+func (w *TextWidget) getLeftWord() (textPos, cursorPos int) {
+	log.Trace.PrintEnter()
+	defer log.Trace.PrintLeave()
+
+	textPos = w.textPos
+	cursorPos = w.cursorPos
+
+	for r, n := w.prevRune(textPos); textPos > 0 && r == ' '; r, n = w.prevRune(textPos) {
+		textPos -= n
+		cursorPos--
+	}
+
+	for r, n := w.prevRune(textPos); textPos > 0 && r != ' '; r, n = w.prevRune(textPos) {
+		textPos -= n
+		cursorPos--
+	}
+
+	return
+}
+
+func (w *TextWidget) moveLeftWord() {
+	log.Trace.PrintEnter()
+	defer log.Trace.PrintLeave()
+
+	if w.textPos > 0 {
+		w.textPos, w.cursorPos = w.getLeftWord()
+		w.Dirty = true
+	}
+}
+
 func (w *TextWidget) deleteLine() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
@@ -184,38 +224,17 @@ func (w *TextWidget) deleteToEol() {
 	}
 }
 
-func (w *TextWidget) deletePrevWord() {
+func (w *TextWidget) deleteLeftWord() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
 	if w.textPos > 0 {
-		ntPos := w.textPos
-		ncPos := w.cursorPos
-
-		for r, n := w.prevRune(ntPos); ntPos > 0 && r == ' '; r, n = w.prevRune(ntPos) {
-			ntPos -= n
-			ncPos--
-		}
-		for r, n := w.prevRune(ntPos); ntPos > 0 && r != ' '; r, n = w.prevRune(ntPos) {
-			ntPos -= n
-			ncPos--
-		}
-
+		ntPos, ncPos := w.getLeftWord()
 		w.text = append(w.text[:ntPos], w.text[w.textPos:]...)
 		w.textPos = ntPos
 		w.cursorPos = ncPos
 		w.Dirty = true
 	}
-}
-
-func (w *TextWidget) prevRune(pos int) (r rune, n int) {
-	r, n = utf8.DecodeLastRune(w.text[:pos])
-	return
-}
-
-func (w *TextWidget) nextRune(pos int) (r rune, n int) {
-	r, n = utf8.DecodeRune(w.text[pos:])
-	return
 }
 
 func (w *TextWidget) Paint() {
