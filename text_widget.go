@@ -8,8 +8,17 @@ import (
 	log "github.com/sgeb/go-sglog"
 )
 
+type TextWidgetModel interface {
+	GetText() string
+	SetText(str string)
+
+	InputAccepted()
+	InputCancelled()
+}
+
 type TextWidget struct {
 	*Canvas
+	Model TextWidgetModel
 
 	text      []byte
 	textPos   int
@@ -66,6 +75,10 @@ func (w *TextWidget) HandleEvent(ev *Event) {
 		w.deleteToEol()
 	case ev.Key == termbox.KeyCtrlW:
 		w.deleteWordLeft()
+	case ev.Key == termbox.KeyEnter:
+		w.acceptInput()
+	case ev.Key == termbox.KeyCtrlC || ev.Key == termbox.KeyCtrlG:
+		w.cancelInput()
 	default:
 		handled = false
 	}
@@ -80,6 +93,15 @@ func (w *TextWidget) prevRune(pos int) (r rune, n int) {
 func (w *TextWidget) nextRune(pos int) (r rune, n int) {
 	r, n = utf8.DecodeRune(w.text[pos:])
 	return
+}
+
+func (w *TextWidget) updateModelText() {
+	log.Trace.PrintEnter()
+	defer log.Trace.PrintLeave()
+
+	if w.Model != nil {
+		w.Model.SetText(string(w.text))
+	}
 }
 
 func (w *TextWidget) insertAtCursor(r rune) {
@@ -104,6 +126,7 @@ func (w *TextWidget) insertAtCursor(r rune) {
 	w.textPos += n
 	w.cursorPos++
 	w.Dirty = true
+	w.updateModelText()
 }
 
 func (w *TextWidget) deleteCharLeft() {
@@ -116,6 +139,7 @@ func (w *TextWidget) deleteCharLeft() {
 		w.textPos -= n
 		w.cursorPos--
 		w.Dirty = true
+		w.updateModelText()
 	}
 }
 
@@ -127,6 +151,7 @@ func (w *TextWidget) deleteCharRight() {
 		_, n := w.nextRune(w.textPos)
 		w.text = append(w.text[:w.textPos], w.text[w.textPos+n:]...)
 		w.Dirty = true
+		w.updateModelText()
 	}
 }
 
@@ -245,6 +270,7 @@ func (w *TextWidget) deleteLine() {
 		w.textPos = 0
 		w.cursorPos = 0
 		w.Dirty = true
+		w.updateModelText()
 	}
 }
 
@@ -255,6 +281,7 @@ func (w *TextWidget) deleteToEol() {
 	if w.textPos < len(w.text) {
 		w.text = w.text[:w.textPos]
 		w.Dirty = true
+		w.updateModelText()
 	}
 }
 
@@ -268,6 +295,25 @@ func (w *TextWidget) deleteWordLeft() {
 		w.textPos = ntPos
 		w.cursorPos = ncPos
 		w.Dirty = true
+		w.updateModelText()
+	}
+}
+
+func (w *TextWidget) acceptInput() {
+	log.Trace.PrintEnter()
+	defer log.Trace.PrintLeave()
+
+	if w.Model != nil {
+		w.Model.InputAccepted()
+	}
+}
+
+func (w *TextWidget) cancelInput() {
+	log.Trace.PrintEnter()
+	defer log.Trace.PrintLeave()
+
+	if w.Model != nil {
+		w.Model.InputCancelled()
 	}
 }
 
