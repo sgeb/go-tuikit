@@ -32,7 +32,7 @@ func NewTextWidget() *TextWidget {
 	defer log.Trace.PrintLeave()
 
 	return &TextWidget{
-		Canvas: NewCanvas(0, 0),
+		Canvas: NewCanvas(),
 
 		// will grow as needed
 		text: make([]byte, 0, 64),

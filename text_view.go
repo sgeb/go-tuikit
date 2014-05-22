@@ -15,12 +15,12 @@ type TextView struct {
 	params *tulib.LabelParams
 }
 
-func NewTextView(w, h int) *TextView {
+func NewTextView() *TextView {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
 	return &TextView{
-		Canvas: NewCanvas(w, h),
+		Canvas: NewCanvas(),
 		params: &tulib.DefaultLabelParams,
 	}
 }

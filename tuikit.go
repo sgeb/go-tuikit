@@ -69,7 +69,7 @@ func createRootView() {
 	defer log.Trace.PrintLeave()
 
 	// Create it with empty size initially
-	root = NewDelegatingView(0, 0)
+	root = NewDelegatingView()
 	clearWithDefaultColors()
 }
 

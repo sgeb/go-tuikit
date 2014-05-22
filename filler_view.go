@@ -10,12 +10,12 @@ type FillerView struct {
 	proto termbox.Cell
 }
 
-func NewFillerView(w, h int, proto termbox.Cell) *FillerView {
+func NewFillerView(proto termbox.Cell) *FillerView {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
 	return &FillerView{
-		Canvas: NewCanvas(w, h),
+		Canvas: NewCanvas(),
 		proto:  proto,
 	}
 }

@@ -7,12 +7,12 @@ type DelegatingView struct {
 	Delegate Painter
 }
 
-func NewDelegatingView(w, h int) *DelegatingView {
+func NewDelegatingView() *DelegatingView {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
 	return &DelegatingView{
-		Canvas:   NewCanvas(w, h),
+		Canvas:   NewCanvas(),
 		Delegate: nil,
 	}
 }

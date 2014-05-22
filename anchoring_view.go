@@ -35,7 +35,7 @@ func NewAnchoringView(
 	defer log.Trace.PrintLeave()
 
 	return &AnchoringView{
-		Canvas:      NewCanvas(0, 0),
+		Canvas:      NewCanvas(),
 		anchorEdge:  anchorEdge,
 		anchorWidth: anchorWidth,
 		anchor:      anchor,

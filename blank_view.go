@@ -10,12 +10,12 @@ type BlankView struct {
 	*Canvas
 }
 
-func NewBlankView(w, h int) *BlankView {
+func NewBlankView() *BlankView {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
 	return &BlankView{
-		Canvas: NewCanvas(w, h),
+		Canvas: NewCanvas(),
 	}
 }
 

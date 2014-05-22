@@ -11,12 +11,12 @@ type Canvas struct {
 	Dirty  bool
 }
 
-func NewCanvas(w, h int) *Canvas {
+func NewCanvas() *Canvas {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
 	return &Canvas{
-		Buffer: tulib.NewBuffer(w, h),
+		Buffer: tulib.NewBuffer(0, 0),
 		Dirty:  true,
 		Cursor: PointHidden,
 	}
