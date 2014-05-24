@@ -10,9 +10,8 @@ import (
 )
 
 type Painter interface {
-	Paint()
-	SetSize(w, h int)
-	GetCanvas() *Canvas
+	PaintTo(buffer *tulib.Buffer, rect tulib.Rect) error
+	SetPaintSubscription(cb func(Painter))
 }
 
 type EventHandler interface {
@@ -26,12 +25,9 @@ type Event struct {
 	Handled bool
 }
 
-type Buffer struct {
-	tulib.Buffer
-}
-
 var (
-	root           *DelegatingView
+	rootPainter    Painter
+	rootBuffer     tulib.Buffer
 	firstResponder EventHandler
 
 	// Event polling channel
@@ -46,37 +42,25 @@ var (
 )
 
 func Init() error {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
 	err := termbox.Init()
 	if err != nil {
 		return fmt.Errorf("Could not init terminal: %v", err)
 	}
 
-	createRootView()
+	err = clearWithDefaultColors()
+	if err != nil {
+		return fmt.Errorf("Could not clear terminal: %v", err)
+	}
 	termbox.SetInputMode(termbox.InputAlt)
 	termbox.HideCursor()
 
-	initInternalEventsProxying()
+	internalEventProxying()
 	StartEventPolling()
 
 	return nil
 }
 
-func createRootView() {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
-	// Create it with empty size initially
-	root = NewDelegatingView()
-	clearWithDefaultColors()
-}
-
-func initInternalEventsProxying() {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
+func internalEventProxying() {
 	go func() {
 		for {
 			tbEvent := <-internalEvents
@@ -86,7 +70,6 @@ func initInternalEventsProxying() {
 			case ev.Type == termbox.EventResize:
 				log.Debug.Println("Received Resize event, clearing screen " +
 					"and setting new size")
-				root.SetSize(ev.Width, ev.Height)
 				clearWithDefaultColors()
 				ev.Handled = true
 			case ev.Type == termbox.EventKey && firstResponder != nil:
@@ -99,9 +82,6 @@ func initInternalEventsProxying() {
 }
 
 func StartEventPolling() {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
 	go func() {
 		for {
 			select {
@@ -114,87 +94,58 @@ func StartEventPolling() {
 }
 
 func StopEventPolling() {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
 	stopPolling <- struct{}{}
 }
 
 func SetPainter(p Painter) {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
-	root.Delegate = p
-	root.Delegate.SetSize(root.Width, root.Height)
+	rootPainter = p
 }
 
 func SetFirstResponder(eh EventHandler) {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
 	firstResponder = eh
 }
 
-func PaintToBuffer() {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
-	root.Paint()
-	if firstResponder != nil {
-		SetCursor(root.Cursor)
-	}
+func Paint() {
+	rootPainter.PaintTo(&rootBuffer, rootBuffer.Rect)
+	flush()
 }
 
 func Sync() error {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
-	// Strangely need to set cursor to valid position before sync and hide it
-	// afterwards for it to really disappear
+	// Strange: must set cursor to valid position before sync. After sync
+	// if can be hidden or set to an arbitrary position
 	mutex.Lock()
 	SetCursor(PointZero)
 	err := termbox.Sync()
-	SetCursor(root.Cursor)
+	//	SetCursor(root.Cursor)
 	mutex.Unlock()
 	return err
 }
 
-func clearWithDefaultColors() error {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
+func clearRect(buffer *tulib.Buffer, rect tulib.Rect) {
+	buffer.Fill(rect, termbox.Cell{Ch: ' '})
+}
 
+func clearWithDefaultColors() error {
 	return clear(termbox.ColorDefault, termbox.ColorDefault)
 }
 
 func clear(fg, bg termbox.Attribute) error {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
 	mutex.Lock()
+	rootBuffer = tulib.TermboxBuffer()
 	err := termbox.Clear(fg, bg)
-	root.Buffer = tulib.TermboxBuffer()
 	mutex.Unlock()
 	return err
 }
 
 func HideCursor() {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
 	termbox.HideCursor()
 }
 
 func SetCursor(p Point) {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
 	termbox.SetCursor(p.X, p.Y)
 }
 
-func Flush() error {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
+func flush() error {
 	mutex.Lock()
 	err := termbox.Flush()
 	mutex.Unlock()
@@ -202,9 +153,6 @@ func Flush() error {
 }
 
 func Close() {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
 	mutex.Lock()
 	termbox.Close()
 	mutex.Unlock()

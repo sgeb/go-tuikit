@@ -17,10 +17,9 @@ type TextWidgetModel interface {
 }
 
 type TextWidget struct {
-	*Canvas
+	*TextView
 	Model TextWidgetModel
 
-	text      []byte
 	textPos   int
 	cursorPos int
 
@@ -28,18 +27,12 @@ type TextWidget struct {
 }
 
 func NewTextWidget() *TextWidget {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
 	return &TextWidget{
-		Canvas: NewCanvas(),
-
-		// will grow as needed
-		text: make([]byte, 0, 64),
+		TextView: NewTextView(),
 	}
 }
 
-func (w *TextWidget) HandleEvent(ev *Event) {
+func (v *TextWidget) HandleEvent(ev *Event) {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
@@ -50,170 +43,170 @@ func (w *TextWidget) HandleEvent(ev *Event) {
 	handled := true
 	switch {
 	case ev.Ch != 0 && ev.Mod&termbox.ModAlt == 0:
-		w.insertAtCursor(ev.Ch)
+		v.insertAtCursor(ev.Ch)
 	case ev.Key == termbox.KeySpace:
-		w.insertAtCursor(' ')
+		v.insertAtCursor(' ')
 	case ev.Key == termbox.KeyBackspace || ev.Key == termbox.KeyBackspace2:
-		w.deleteCharLeft()
+		v.deleteCharLeft()
 	case ev.Key == termbox.KeyDelete:
-		w.deleteCharRight()
+		v.deleteCharRight()
 	case ev.Key == termbox.KeyArrowLeft || ev.Key == termbox.KeyCtrlB:
-		w.moveCharLeft()
+		v.moveCharLeft()
 	case ev.Key == termbox.KeyArrowRight || ev.Key == termbox.KeyCtrlF:
-		w.moveCharRight()
+		v.moveCharRight()
 	case ev.Key == termbox.KeyHome || ev.Key == termbox.KeyCtrlA:
-		w.moveHome()
+		v.moveHome()
 	case ev.Key == termbox.KeyEnd || ev.Key == termbox.KeyCtrlE:
-		w.moveEnd()
+		v.moveEnd()
 	case ev.Ch == 'b' && ev.Mod&termbox.ModAlt == 1:
-		w.moveWordLeft()
+		v.moveWordLeft()
 	case ev.Ch == 'f' && ev.Mod&termbox.ModAlt == 1:
-		w.moveWordRight()
+		v.moveWordRight()
 	case ev.Key == termbox.KeyCtrlU:
-		w.deleteLine()
+		v.deleteLine()
 	case ev.Key == termbox.KeyCtrlK:
-		w.deleteToEol()
+		v.deleteToEol()
 	case ev.Key == termbox.KeyCtrlW:
-		w.deleteWordLeft()
+		v.deleteWordLeft()
 	case ev.Key == termbox.KeyEnter:
-		w.acceptInput()
+		v.acceptInput()
 	case ev.Key == termbox.KeyCtrlC || ev.Key == termbox.KeyCtrlG:
-		w.cancelInput()
+		v.cancelInput()
 	default:
 		handled = false
 	}
 	ev.Handled = handled
 }
 
-func (w *TextWidget) prevRune(pos int) (r rune, n int) {
-	r, n = utf8.DecodeLastRune(w.text[:pos])
+func (v *TextWidget) prevRune(pos int) (r rune, n int) {
+	r, n = utf8.DecodeLastRune(v.text[:pos])
 	return
 }
 
-func (w *TextWidget) nextRune(pos int) (r rune, n int) {
-	r, n = utf8.DecodeRune(w.text[pos:])
+func (v *TextWidget) nextRune(pos int) (r rune, n int) {
+	r, n = utf8.DecodeRune(v.text[pos:])
 	return
 }
 
-func (w *TextWidget) updateModelText() {
+func (v *TextWidget) updateModelText() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if w.Model != nil {
-		w.Model.SetText(string(w.text))
+	if v.Model != nil {
+		v.Model.SetText(string(v.text))
 	}
 }
 
-func (w *TextWidget) insertAtCursor(r rune) {
+func (v *TextWidget) insertAtCursor(r rune) {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
 	log.Debug.Printf("Rune: %v (%v)", r, string(r))
 	var n int
 	if r < utf8.RuneSelf {
-		w.runeBytes[0] = byte(r)
+		v.runeBytes[0] = byte(r)
 		n = 1
 	} else {
-		n = utf8.EncodeRune(w.runeBytes[:], r)
+		n = utf8.EncodeRune(v.runeBytes[:], r)
 	}
 
-	newText := make([]byte, 0, len(w.text)+n)
-	newText = append(newText, w.text[:w.textPos]...)
-	newText = append(newText, w.runeBytes[:n]...)
-	newText = append(newText, w.text[w.textPos:]...)
-	w.text = newText
+	newText := make([]byte, 0, len(v.text)+n)
+	newText = append(newText, v.text[:v.textPos]...)
+	newText = append(newText, v.runeBytes[:n]...)
+	newText = append(newText, v.text[v.textPos:]...)
+	v.text = newText
 
-	w.textPos += n
-	w.cursorPos++
-	w.Dirty = true
-	w.updateModelText()
+	v.textPos += n
+	v.cursorPos++
+	v.NeedPaint()
+	v.updateModelText()
 }
 
-func (w *TextWidget) deleteCharLeft() {
+func (v *TextWidget) deleteCharLeft() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if w.textPos > 0 {
-		_, n := w.prevRune(w.textPos)
-		w.text = append(w.text[:w.textPos-n], w.text[w.textPos:]...)
-		w.textPos -= n
-		w.cursorPos--
-		w.Dirty = true
-		w.updateModelText()
+	if v.textPos > 0 {
+		_, n := v.prevRune(v.textPos)
+		v.text = append(v.text[:v.textPos-n], v.text[v.textPos:]...)
+		v.textPos -= n
+		v.cursorPos--
+		v.NeedPaint()
+		v.updateModelText()
 	}
 }
 
-func (w *TextWidget) deleteCharRight() {
+func (v *TextWidget) deleteCharRight() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if w.textPos < len(w.text) {
-		_, n := w.nextRune(w.textPos)
-		w.text = append(w.text[:w.textPos], w.text[w.textPos+n:]...)
-		w.Dirty = true
-		w.updateModelText()
+	if v.textPos < len(v.text) {
+		_, n := v.nextRune(v.textPos)
+		v.text = append(v.text[:v.textPos], v.text[v.textPos+n:]...)
+		v.NeedPaint()
+		v.updateModelText()
 	}
 }
 
-func (w *TextWidget) moveCharLeft() {
+func (v *TextWidget) moveCharLeft() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if w.textPos > 0 {
-		_, n := w.prevRune(w.textPos)
-		w.textPos -= n
-		w.cursorPos--
-		w.Dirty = true
+	if v.textPos > 0 {
+		_, n := v.prevRune(v.textPos)
+		v.textPos -= n
+		v.cursorPos--
+		v.NeedPaint()
 	}
 }
 
-func (w *TextWidget) moveCharRight() {
+func (v *TextWidget) moveCharRight() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if w.textPos < len(w.text) {
-		_, n := w.nextRune(w.textPos)
-		w.textPos += n
-		w.cursorPos++
-		w.Dirty = true
+	if v.textPos < len(v.text) {
+		_, n := v.nextRune(v.textPos)
+		v.textPos += n
+		v.cursorPos++
+		v.NeedPaint()
 	}
 }
 
-func (w *TextWidget) moveHome() {
+func (v *TextWidget) moveHome() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if w.textPos > 0 {
-		w.textPos = 0
-		w.cursorPos = 0
-		w.Dirty = true
+	if v.textPos > 0 {
+		v.textPos = 0
+		v.cursorPos = 0
+		v.NeedPaint()
 	}
 }
 
-func (w *TextWidget) moveEnd() {
+func (v *TextWidget) moveEnd() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if w.textPos < len(w.text) {
-		w.textPos = len(w.text)
-		w.cursorPos = utf8.RuneCount(w.text)
-		w.Dirty = true
+	if v.textPos < len(v.text) {
+		v.textPos = len(v.text)
+		v.cursorPos = utf8.RuneCount(v.text)
+		v.NeedPaint()
 	}
 }
 
-func (w *TextWidget) getPosWordLeft() (textPos, cursorPos int) {
+func (v *TextWidget) getPosWordLeft() (textPos, cursorPos int) {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	textPos = w.textPos
-	cursorPos = w.cursorPos
+	textPos = v.textPos
+	cursorPos = v.cursorPos
 
-	for r, n := w.prevRune(textPos); textPos > 0 && r == ' '; r, n = w.prevRune(textPos) {
+	for r, n := v.prevRune(textPos); textPos > 0 && r == ' '; r, n = v.prevRune(textPos) {
 		textPos -= n
 		cursorPos--
 	}
 
-	for r, n := w.prevRune(textPos); textPos > 0 && r != ' '; r, n = w.prevRune(textPos) {
+	for r, n := v.prevRune(textPos); textPos > 0 && r != ' '; r, n = v.prevRune(textPos) {
 		textPos -= n
 		cursorPos--
 	}
@@ -221,19 +214,19 @@ func (w *TextWidget) getPosWordLeft() (textPos, cursorPos int) {
 	return
 }
 
-func (w *TextWidget) getPosWordRight() (textPos, cursorPos int) {
+func (v *TextWidget) getPosWordRight() (textPos, cursorPos int) {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	textPos = w.textPos
-	cursorPos = w.cursorPos
+	textPos = v.textPos
+	cursorPos = v.cursorPos
 
-	for r, n := w.nextRune(textPos); textPos < len(w.text) && r == ' '; r, n = w.nextRune(textPos) {
+	for r, n := v.nextRune(textPos); textPos < len(v.text) && r == ' '; r, n = v.nextRune(textPos) {
 		textPos += n
 		cursorPos++
 	}
 
-	for r, n := w.nextRune(textPos); textPos < len(w.text) && r != ' '; r, n = w.nextRune(textPos) {
+	for r, n := v.nextRune(textPos); textPos < len(v.text) && r != ' '; r, n = v.nextRune(textPos) {
 		textPos += n
 		cursorPos++
 	}
@@ -241,127 +234,115 @@ func (w *TextWidget) getPosWordRight() (textPos, cursorPos int) {
 	return
 }
 
-func (w *TextWidget) moveWordLeft() {
+func (v *TextWidget) moveWordLeft() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if w.textPos > 0 {
-		w.textPos, w.cursorPos = w.getPosWordLeft()
-		w.Dirty = true
+	if v.textPos > 0 {
+		v.textPos, v.cursorPos = v.getPosWordLeft()
+		v.NeedPaint()
 	}
 }
 
-func (w *TextWidget) moveWordRight() {
+func (v *TextWidget) moveWordRight() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if w.textPos < len(w.text) {
-		w.textPos, w.cursorPos = w.getPosWordRight()
-		w.Dirty = true
+	if v.textPos < len(v.text) {
+		v.textPos, v.cursorPos = v.getPosWordRight()
+		v.NeedPaint()
 	}
 }
 
-func (w *TextWidget) deleteLine() {
+func (v *TextWidget) deleteLine() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if len(w.text) > 0 {
-		w.text = []byte(nil)
-		w.textPos = 0
-		w.cursorPos = 0
-		w.Dirty = true
-		w.updateModelText()
+	if len(v.text) > 0 {
+		v.text = []byte(nil)
+		v.textPos = 0
+		v.cursorPos = 0
+		v.NeedPaint()
+		v.updateModelText()
 	}
 }
 
-func (w *TextWidget) deleteToEol() {
+func (v *TextWidget) deleteToEol() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if w.textPos < len(w.text) {
-		w.text = w.text[:w.textPos]
-		w.Dirty = true
-		w.updateModelText()
+	if v.textPos < len(v.text) {
+		v.text = v.text[:v.textPos]
+		v.NeedPaint()
+		v.updateModelText()
 	}
 }
 
-func (w *TextWidget) deleteWordLeft() {
+func (v *TextWidget) deleteWordLeft() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if w.textPos > 0 {
-		ntPos, ncPos := w.getPosWordLeft()
-		w.text = append(w.text[:ntPos], w.text[w.textPos:]...)
-		w.textPos = ntPos
-		w.cursorPos = ncPos
-		w.Dirty = true
-		w.updateModelText()
+	if v.textPos > 0 {
+		ntPos, ncPos := v.getPosWordLeft()
+		v.text = append(v.text[:ntPos], v.text[v.textPos:]...)
+		v.textPos = ntPos
+		v.cursorPos = ncPos
+		v.NeedPaint()
+		v.updateModelText()
 	}
 }
 
-func (w *TextWidget) acceptInput() {
+func (v *TextWidget) acceptInput() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if w.Model != nil {
-		w.Model.InputAccepted()
+	if v.Model != nil {
+		v.Model.InputAccepted()
 	}
 }
 
-func (w *TextWidget) cancelInput() {
+func (v *TextWidget) cancelInput() {
 	log.Trace.PrintEnter()
 	defer log.Trace.PrintLeave()
 
-	if w.Model != nil {
-		w.Model.InputCancelled()
+	if v.Model != nil {
+		v.Model.InputCancelled()
 	}
 }
 
-func (w *TextWidget) Paint() {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
-	if !w.Dirty {
-		log.Debug.Println("Not dirty, early return")
-		return
-	}
-
-	// TODO: implement scrolling
-	//	start := 0
-	//	pos := w.textPos
-	//	len := w.len
-	//
-	//	for pos >= w.Width {
-	//		start++
-	//		pos--
-	//		len--
-	//	}
-	//	for len > w.Width {
-	//		len--
-	//	}
-
-	log.Debug.Printf("Text: %v (len: %v)", string(w.text), len(w.text))
-	log.Debug.Printf("Text: %v", w.text)
-
-	w.Fill(w.Rect, termbox.Cell{Ch: ' '})
-	w.DrawLabel(w.Rect, &tulib.DefaultLabelParams, w.text)
-	w.Cursor = NewPoint(w.cursorPos, 0)
-	w.Dirty = false
+func (v *TextWidget) PaintTo(buffer *tulib.Buffer, rect tulib.Rect) error {
+	buffer.Fill(rect, termbox.Cell{Ch: 'b'})
+	return nil
 }
 
-func (w *TextWidget) SetSize(nw, nh int) {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
-	if w.Width != nw || w.Height != nh {
-		w.Buffer.Resize(nw, nh)
-		w.Dirty = true
-	}
-}
-
-func (w *TextWidget) GetCanvas() *Canvas {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
-	return w.Canvas
-}
+//func (v *TextWidget) Paint() {
+//	log.Trace.PrintEnter()
+//	defer log.Trace.PrintLeave()
+//
+//	if !v.Dirty {
+//		log.Debug.Println("Not dirty, early return")
+//		return
+//	}
+//
+//	// TODO: implement scrolling
+//	//	start := 0
+//	//	pos := v.textPos
+//	//	len := v.len
+//	//
+//	//	for pos >= v.Width {
+//	//		start++
+//	//		pos--
+//	//		len--
+//	//	}
+//	//	for len > v.Width {
+//	//		len--
+//	//	}
+//
+//	log.Debug.Printf("Text: %v (len: %v)", string(v.text), len(v.text))
+//	log.Debug.Printf("Text: %v", v.text)
+//
+//	v.Fill(v.Rect, termbox.Cell{Ch: ' '})
+//	v.DrawLabel(v.Rect, &tulib.DefaultLabelParams, v.text)
+//	v.Cursor = NewPoint(v.cursorPos, 0)
+//	v.Dirty = false
+//}

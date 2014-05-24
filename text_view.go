@@ -1,76 +1,32 @@
 package tuikit
 
-import (
-	"bytes"
-	"fmt"
-
-	termbox "github.com/nsf/termbox-go"
-	"github.com/nsf/tulib"
-	log "github.com/sgeb/go-sglog"
-)
+import "github.com/nsf/tulib"
 
 type TextView struct {
-	*Canvas
+	*BaseView
 	text   []byte
 	params *tulib.LabelParams
 }
 
 func NewTextView() *TextView {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
 	return &TextView{
-		Canvas: NewCanvas(),
-		params: &tulib.DefaultLabelParams,
+		BaseView: NewBaseView(),
+		params:   &tulib.DefaultLabelParams,
 	}
 }
 
 func (v *TextView) SetText(text string) {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
-	var t bytes.Buffer
-	fmt.Fprint(&t, text)
-	v.text = t.Bytes()
-
-	v.Dirty = true
+	v.text = []byte(text)
+	v.NeedPaint()
 }
 
 func (v *TextView) SetParams(params *tulib.LabelParams) {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
 	v.params = params
-	v.Dirty = true
+	v.NeedPaint()
 }
 
-func (v *TextView) Paint() {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
-	if !v.Dirty {
-		log.Debug.Println("Not dirty, early return")
-		return
-	}
-
-	v.Fill(v.Rect, termbox.Cell{Ch: ' '})
-	v.DrawLabel(v.Rect, v.params, v.text)
-	v.Dirty = false
-}
-
-func (v *TextView) SetSize(w, h int) {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
-	if v.Width != w || v.Height != h {
-		v.Buffer.Resize(w, h)
-		v.Dirty = true
-	}
-}
-
-func (v *TextView) GetCanvas() *Canvas {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
-	return v.Canvas
+func (v *TextView) PaintTo(buffer *tulib.Buffer, rect tulib.Rect) error {
+	clearRect(buffer, rect)
+	buffer.DrawLabel(rect, v.params, []byte(v.text))
+	return nil
 }

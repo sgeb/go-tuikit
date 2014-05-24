@@ -1,8 +1,9 @@
 package tuikit
 
 import (
+	"fmt"
+
 	"github.com/nsf/tulib"
-	log "github.com/sgeb/go-sglog"
 )
 
 type AnchorEdge uint
@@ -14,16 +15,13 @@ const (
 	AnchorEdgeRight
 )
 
-// TODO: make views anon composition of tuikit.Rect (with uints)
-// TODO: make Canvas of all views a field named Canvas (instead of anon)
 type AnchoringView struct {
-	*Canvas
+	*BaseView
 
 	anchorEdge  AnchorEdge
 	anchorWidth int
 
-	anchor, main         Painter
-	anchorRect, mainRect tulib.Rect
+	anchor, main Painter
 }
 
 func NewAnchoringView(
@@ -31,11 +29,8 @@ func NewAnchoringView(
 	anchorWidth int,
 	anchor, main Painter,
 ) *AnchoringView {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
 	return &AnchoringView{
-		Canvas:      NewCanvas(),
+		BaseView:    NewBaseView(),
 		anchorEdge:  anchorEdge,
 		anchorWidth: anchorWidth,
 		anchor:      anchor,
@@ -43,92 +38,60 @@ func NewAnchoringView(
 	}
 }
 
-func (v *AnchoringView) Paint() {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
-	if v.anchor != nil {
-		v.anchor.Paint()
-		v.Blit(v.anchorRect, 0, 0, &v.anchor.GetCanvas().Buffer)
-
-		c := v.anchor.GetCanvas().Cursor
-		if !c.Hidden() {
-			v.Cursor = c.Add(NewPoint(v.anchorRect.X, v.anchorRect.Y))
-		}
+func (v *AnchoringView) PaintTo(buffer *tulib.Buffer, rect tulib.Rect) error {
+	if err := v.calcSizes(rect); err != nil {
+		return err
 	}
 
-	if v.main != nil {
-		v.main.Paint()
-		v.Blit(v.mainRect, 0, 0, &v.main.GetCanvas().Buffer)
+	return v.BaseView.PaintTo(buffer, rect)
+}
 
-		c := v.main.GetCanvas().Cursor
-		if !c.Hidden() {
-			v.Cursor = c.Add(NewPoint(v.mainRect.X, v.mainRect.Y))
-		}
+func (v *AnchoringView) calcSizes(rect tulib.Rect) error {
+	var (
+		x, y, w, h     int = rect.X, rect.Y, rect.Width, rect.Height
+		ax, ay, aw, ah int
+		mx, my, mw, mh int
+	)
+
+	// Set width and height
+	switch v.anchorEdge {
+	case AnchorEdgeTop, AnchorEdgeBottom:
+		aw = w
+		ah = v.anchorWidth
+		mw = w
+		mh = h - v.anchorWidth
+	case AnchorEdgeLeft, AnchorEdgeRight:
+		aw = v.anchorWidth
+		ah = h
+		mw = w - v.anchorWidth
+		mh = h
 	}
-}
 
-// TODO: change int to uint in Painter and constructors
-// TODO: maybe remove w,h from constructor
-func (v *AnchoringView) SetSize(w, h int) {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
-	log.Debug.Println("New size w,h:", w, h)
-	if v.Width != w || v.Height != h {
-		v.Resize(w, h)
-		v.Dirty = true
-
-		var ax, ay, aw, ah int
-		var mx, my, mw, mh int
-
-		// Set width and height
-		switch v.anchorEdge {
-		case AnchorEdgeTop, AnchorEdgeBottom:
-			aw = v.Width
-			ah = int(v.anchorWidth)
-			mw = v.Width
-			mh = v.Height - v.anchorWidth
-		case AnchorEdgeLeft, AnchorEdgeRight:
-			aw = int(v.anchorWidth)
-			ah = v.Height
-			mw = v.Width - v.anchorWidth
-			mh = v.Height
-		}
-
-		// Set x, y
-		switch v.anchorEdge {
-		case AnchorEdgeBottom, AnchorEdgeRight:
-			ax = v.Width - aw
-			ay = v.Height - ah
-			mx = 0
-			my = 0
-		case AnchorEdgeTop, AnchorEdgeLeft:
-			ax = 0
-			ay = 0
-			mx = v.Width - mw
-			my = v.Height - mh
-		}
-
-		v.anchorRect = tulib.Rect{ax, ay, aw, ah}
-		v.anchor.SetSize(aw, ah)
-
-		v.mainRect = tulib.Rect{mx, my, mw, mh}
-		v.main.SetSize(mw, mh)
+	// Set x, y
+	switch v.anchorEdge {
+	case AnchorEdgeBottom, AnchorEdgeRight:
+		ax = x + w - aw
+		ay = y + h - ah
+		mx = x
+		my = y
+	case AnchorEdgeTop, AnchorEdgeLeft:
+		ax = x
+		ay = y
+		mx = x + w - mw
+		my = y + h - mh
 	}
-}
 
-func (v *AnchoringView) GetCanvas() *Canvas {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
+	aRect := tulib.Rect{ax, ay, aw, ah}
+	mRect := tulib.Rect{mx, my, mw, mh}
 
-	return v.Canvas
-}
+	if !aRect.FitsIn(rect) {
+		return fmt.Errorf("Anchor too big, anchor: %v, container: %v", aRect, rect)
+	}
+	if !mRect.FitsIn(rect) {
+		return fmt.Errorf("Main too big, main: %v, container: %v", mRect, rect)
+	}
 
-func (v *AnchoringView) SetMain(nMain Painter) {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
-	nMain.SetSize(v.mainRect.Width, v.mainRect.Height)
-	v.main = nMain
+	v.AttachChild(v.anchor, aRect)
+	v.AttachChild(v.main, mRect)
+	return nil
 }
