@@ -11,7 +11,7 @@ import (
 
 type Painter interface {
 	PaintTo(buffer *tulib.Buffer, rect tulib.Rect) error
-	SetPaintSubscription(cb func(Painter))
+	SetPaintSubscription(cb func())
 }
 
 type EventHandler interface {

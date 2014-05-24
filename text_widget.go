@@ -311,8 +311,12 @@ func (v *TextWidget) cancelInput() {
 }
 
 func (v *TextWidget) PaintTo(buffer *tulib.Buffer, rect tulib.Rect) error {
-	buffer.Fill(rect, termbox.Cell{Ch: 'b'})
-	return nil
+	log.Debug.Printf("Text: %v (len: %v)", string(v.text), len(v.text))
+	log.Debug.Printf("Text: %v", v.text)
+
+	return v.TextView.PaintTo(buffer, rect)
+	//	v.Cursor = NewPoint(v.cursorPos, 0)
+	//	return nil
 }
 
 //func (v *TextWidget) Paint() {
