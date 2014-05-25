@@ -53,7 +53,7 @@ func Init() error {
 		return fmt.Errorf("Could not clear terminal: %v", err)
 	}
 	termbox.SetInputMode(termbox.InputAlt)
-	termbox.HideCursor()
+	hideCursor()
 
 	internalEventProxying()
 	StartEventPolling()
@@ -72,6 +72,7 @@ func internalEventProxying() {
 				log.Debug.Println("Received Resize event, clearing screen " +
 					"and setting new size")
 				clearWithDefaultColors()
+				Paint()
 				ev.Handled = true
 			case ev.Type == termbox.EventKey && firstResponder != nil:
 				firstResponder.HandleEvent(&ev)
@@ -112,12 +113,22 @@ func SetFirstResponder(eh Responder) {
 	firstResponder = eh
 }
 
-func Paint() {
-	rootPainter.PaintTo(&rootBuffer, rootBuffer.Rect)
+func Paint() error {
+	err := rootPainter.PaintTo(&rootBuffer, rootBuffer.Rect)
+	if err != nil {
+		return err
+	}
+
 	if firstResponder == nil {
 		hideCursor()
 	}
-	flush()
+
+	err = flush()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func Sync() error {
@@ -137,10 +148,16 @@ func clearWithDefaultColors() error {
 
 func clear(fg, bg termbox.Attribute) error {
 	mutex.Lock()
-	rootBuffer = tulib.TermboxBuffer()
 	err := termbox.Clear(fg, bg)
 	mutex.Unlock()
+	updateRootBuffer()
 	return err
+}
+
+func updateRootBuffer() {
+	mutex.Lock()
+	rootBuffer = tulib.TermboxBuffer()
+	mutex.Unlock()
 }
 
 func hideCursor() {
@@ -157,6 +174,7 @@ func flush() error {
 	mutex.Lock()
 	err := termbox.Flush()
 	mutex.Unlock()
+	updateRootBuffer()
 	return err
 }
 
