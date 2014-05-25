@@ -3,7 +3,7 @@ package tuikit
 import "github.com/nsf/tulib"
 
 type BaseView struct {
-	paintSubscription func()
+	paintSubscriber   func()
 	childrenRect      map[Painter]tulib.Rect
 	childrenNeedPaint map[Painter]bool
 }
@@ -16,8 +16,8 @@ func NewBaseView() *BaseView {
 }
 
 func (v *BaseView) NeedPaint() {
-	if v.paintSubscription != nil {
-		v.paintSubscription()
+	if v.paintSubscriber != nil {
+		v.paintSubscriber()
 	}
 }
 
@@ -29,13 +29,13 @@ func (v *BaseView) AttachChild(child Painter, rect tulib.Rect) {
 		}
 	}
 
-	child.SetPaintSubscription(func() { v.ChildNeedsPaint(child) })
+	child.SetPaintSubscriber(func() { v.ChildNeedsPaint(child) })
 	v.childrenRect[child] = rect
 	v.childrenNeedPaint[child] = true
 }
 
 func (v *BaseView) DetachChild(child Painter) {
-	child.SetPaintSubscription(nil)
+	child.SetPaintSubscriber(nil)
 	delete(v.childrenRect, child)
 	delete(v.childrenNeedPaint, child)
 }
@@ -64,6 +64,6 @@ func (v *BaseView) PaintTo(buffer *tulib.Buffer, rect tulib.Rect) error {
 	return nil
 }
 
-func (v *BaseView) SetPaintSubscription(cb func()) {
-	v.paintSubscription = cb
+func (v *BaseView) SetPaintSubscriber(cb func()) {
+	v.paintSubscriber = cb
 }

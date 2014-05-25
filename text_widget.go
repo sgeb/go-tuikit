@@ -20,6 +20,8 @@ type TextWidget struct {
 	*TextView
 	Model TextWidgetModel
 
+	cursorPainter func(Point)
+
 	textPos   int
 	cursorPos int
 
@@ -30,52 +32,6 @@ func NewTextWidget() *TextWidget {
 	return &TextWidget{
 		TextView: NewTextView(),
 	}
-}
-
-func (v *TextWidget) HandleEvent(ev *Event) {
-	log.Trace.PrintEnter()
-	defer log.Trace.PrintLeave()
-
-	if ev.Type != termbox.EventKey {
-		return
-	}
-
-	handled := true
-	switch {
-	case ev.Ch != 0 && ev.Mod&termbox.ModAlt == 0:
-		v.insertAtCursor(ev.Ch)
-	case ev.Key == termbox.KeySpace:
-		v.insertAtCursor(' ')
-	case ev.Key == termbox.KeyBackspace || ev.Key == termbox.KeyBackspace2:
-		v.deleteCharLeft()
-	case ev.Key == termbox.KeyDelete:
-		v.deleteCharRight()
-	case ev.Key == termbox.KeyArrowLeft || ev.Key == termbox.KeyCtrlB:
-		v.moveCharLeft()
-	case ev.Key == termbox.KeyArrowRight || ev.Key == termbox.KeyCtrlF:
-		v.moveCharRight()
-	case ev.Key == termbox.KeyHome || ev.Key == termbox.KeyCtrlA:
-		v.moveHome()
-	case ev.Key == termbox.KeyEnd || ev.Key == termbox.KeyCtrlE:
-		v.moveEnd()
-	case ev.Ch == 'b' && ev.Mod&termbox.ModAlt == 1:
-		v.moveWordLeft()
-	case ev.Ch == 'f' && ev.Mod&termbox.ModAlt == 1:
-		v.moveWordRight()
-	case ev.Key == termbox.KeyCtrlU:
-		v.deleteLine()
-	case ev.Key == termbox.KeyCtrlK:
-		v.deleteToEol()
-	case ev.Key == termbox.KeyCtrlW:
-		v.deleteWordLeft()
-	case ev.Key == termbox.KeyEnter:
-		v.acceptInput()
-	case ev.Key == termbox.KeyCtrlC || ev.Key == termbox.KeyCtrlG:
-		v.cancelInput()
-	default:
-		handled = false
-	}
-	ev.Handled = handled
 }
 
 func (v *TextWidget) prevRune(pos int) (r rune, n int) {
@@ -314,9 +270,12 @@ func (v *TextWidget) PaintTo(buffer *tulib.Buffer, rect tulib.Rect) error {
 	log.Debug.Printf("Text: %v (len: %v)", string(v.text), len(v.text))
 	log.Debug.Printf("Text: %v", v.text)
 
+	if v.cursorPainter != nil {
+		cursorPos := NewPoint(rect.X+v.cursorPos, rect.Y)
+		v.cursorPainter(cursorPos)
+	}
+
 	return v.TextView.PaintTo(buffer, rect)
-	//	v.Cursor = NewPoint(v.cursorPos, 0)
-	//	return nil
 }
 
 //func (v *TextWidget) Paint() {
@@ -350,3 +309,58 @@ func (v *TextWidget) PaintTo(buffer *tulib.Buffer, rect tulib.Rect) error {
 //	v.Cursor = NewPoint(v.cursorPos, 0)
 //	v.Dirty = false
 //}
+
+//----------------------------------------------------------------------------
+// Responder Interface
+//----------------------------------------------------------------------------
+
+func (v *TextWidget) HandleEvent(ev *Event) {
+	log.Trace.PrintEnter()
+	defer log.Trace.PrintLeave()
+
+	if ev.Type != termbox.EventKey {
+		return
+	}
+
+	handled := true
+	switch {
+	case ev.Ch != 0 && ev.Mod&termbox.ModAlt == 0:
+		v.insertAtCursor(ev.Ch)
+	case ev.Key == termbox.KeySpace:
+		v.insertAtCursor(' ')
+	case ev.Key == termbox.KeyBackspace || ev.Key == termbox.KeyBackspace2:
+		v.deleteCharLeft()
+	case ev.Key == termbox.KeyDelete:
+		v.deleteCharRight()
+	case ev.Key == termbox.KeyArrowLeft || ev.Key == termbox.KeyCtrlB:
+		v.moveCharLeft()
+	case ev.Key == termbox.KeyArrowRight || ev.Key == termbox.KeyCtrlF:
+		v.moveCharRight()
+	case ev.Key == termbox.KeyHome || ev.Key == termbox.KeyCtrlA:
+		v.moveHome()
+	case ev.Key == termbox.KeyEnd || ev.Key == termbox.KeyCtrlE:
+		v.moveEnd()
+	case ev.Ch == 'b' && ev.Mod&termbox.ModAlt == 1:
+		v.moveWordLeft()
+	case ev.Ch == 'f' && ev.Mod&termbox.ModAlt == 1:
+		v.moveWordRight()
+	case ev.Key == termbox.KeyCtrlU:
+		v.deleteLine()
+	case ev.Key == termbox.KeyCtrlK:
+		v.deleteToEol()
+	case ev.Key == termbox.KeyCtrlW:
+		v.deleteWordLeft()
+	case ev.Key == termbox.KeyEnter:
+		v.acceptInput()
+	case ev.Key == termbox.KeyCtrlC || ev.Key == termbox.KeyCtrlG:
+		v.cancelInput()
+	default:
+		handled = false
+	}
+	ev.Handled = handled
+}
+
+func (v *TextWidget) SetCursorPainter(cb func(Point)) {
+	v.cursorPainter = cb
+	v.NeedPaint()
+}

@@ -11,13 +11,14 @@ import (
 
 type Painter interface {
 	PaintTo(buffer *tulib.Buffer, rect tulib.Rect) error
-	SetPaintSubscription(cb func())
+	SetPaintSubscriber(cb func())
 }
 
-type EventHandler interface {
+type Responder interface {
 	// HandleEvent should set Event.Handled to true if it was
 	// handled so that the main loop knows to ignores it
 	HandleEvent(*Event)
+	SetCursorPainter(cb func(Point))
 }
 
 type Event struct {
@@ -28,7 +29,7 @@ type Event struct {
 var (
 	rootPainter    Painter
 	rootBuffer     tulib.Buffer
-	firstResponder EventHandler
+	firstResponder Responder
 
 	// Event polling channel
 	Events chan Event = make(chan Event, 20)
@@ -101,22 +102,27 @@ func SetPainter(p Painter) {
 	rootPainter = p
 }
 
-func SetFirstResponder(eh EventHandler) {
+func SetFirstResponder(eh Responder) {
+	if firstResponder != nil {
+		firstResponder.SetCursorPainter(nil)
+	}
+	if eh != nil {
+		eh.SetCursorPainter(func(pos Point) { setCursor(pos) })
+	}
 	firstResponder = eh
 }
 
 func Paint() {
 	rootPainter.PaintTo(&rootBuffer, rootBuffer.Rect)
+	if firstResponder == nil {
+		hideCursor()
+	}
 	flush()
 }
 
 func Sync() error {
-	// Strange: must set cursor to valid position before sync. After sync
-	// if can be hidden or set to an arbitrary position
 	mutex.Lock()
-	SetCursor(PointZero)
 	err := termbox.Sync()
-	//	SetCursor(root.Cursor)
 	mutex.Unlock()
 	return err
 }
@@ -137,11 +143,13 @@ func clear(fg, bg termbox.Attribute) error {
 	return err
 }
 
-func HideCursor() {
+func hideCursor() {
+	// Probably a bug: Cursor must be set to valid position before hiding
+	setCursor(PointZero)
 	termbox.HideCursor()
 }
 
-func SetCursor(p Point) {
+func setCursor(p Point) {
 	termbox.SetCursor(p.X, p.Y)
 }
 
