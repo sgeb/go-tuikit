@@ -9,46 +9,37 @@ type StringProperty interface {
 }
 
 type stringPropertyBase struct {
-	readOnly bool
-	val      string
+	Property
 }
 
-func newString(readOnly bool, val string) StringProperty {
+func NewStringProperty() StringProperty {
 	return &stringPropertyBase{
-		readOnly: readOnly,
-		val:      val,
+		NewProperty(),
 	}
 }
 
-func NewStringProperty(val string) StringProperty {
-	return newString(false, val)
-}
-
-func NewReadOnlyStringProperty(val string) StringProperty {
-	return newString(true, val)
-}
-
-func (sb *stringPropertyBase) Get() string {
-	return sb.val
-}
-
-func (sb *stringPropertyBase) Set(s string) error {
-	if sb.readOnly {
-		return ErrPropertyReadOnly
+func NewReadOnlyStringProperty() StringProperty {
+	return &stringPropertyBase{
+		NewReadOnlyProperty(),
 	}
-
-	sb.val = s
-	return nil
 }
 
-func (sb *stringPropertyBase) ReadOnly() bool {
-	return sb.readOnly
+func (sp *stringPropertyBase) Get() string {
+	return sp.Property.Get().(string)
 }
 
-func (sb *stringPropertyBase) Watch() WatcherChan {
-	return nil
+func (sp *stringPropertyBase) Set(s string) error {
+	return sp.Property.Set(s)
 }
 
-func (sb *stringPropertyBase) Dispose() {
-	return
+func (sp *stringPropertyBase) ReadOnly() bool {
+	return sp.Property.ReadOnly()
+}
+
+func (sp *stringPropertyBase) Watch() WatcherChan {
+	return sp.Property.Watch()
+}
+
+func (sp *stringPropertyBase) Dispose() {
+	sp.Property.Dispose()
 }
