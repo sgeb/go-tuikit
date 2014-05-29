@@ -6,19 +6,18 @@ var (
 	ErrPropertyReadOnly error = errors.New("read-only property")
 )
 
-type WatcherChan <-chan struct{}
-
 type Property interface {
 	Get() interface{}
 	Set(interface{}) error
 	ReadOnly() bool
-	Watch() WatcherChan
+	Subscribe() <-chan struct{}
 	Dispose()
 }
 
 type propertyBase struct {
-	readOnly bool
-	val      interface{}
+	readOnly      bool
+	val           interface{}
+	subscriptions []chan struct{}
 }
 
 func newProperty(readOnly bool) Property {
@@ -45,6 +44,11 @@ func (p *propertyBase) Set(nv interface{}) error {
 	}
 
 	p.val = nv
+
+	for _, c := range p.subscriptions {
+		c <- struct{}{}
+	}
+
 	return nil
 }
 
@@ -52,10 +56,14 @@ func (p *propertyBase) ReadOnly() bool {
 	return p.readOnly
 }
 
-func (p *propertyBase) Watch() WatcherChan {
-	return nil
+func (p *propertyBase) Subscribe() <-chan struct{} {
+	c := make(chan struct{})
+	p.subscriptions = append(p.subscriptions, c)
+	return c
 }
 
 func (p *propertyBase) Dispose() {
-	return
+	for _, c := range p.subscriptions {
+		close(c)
+	}
 }

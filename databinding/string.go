@@ -4,7 +4,7 @@ type StringProperty interface {
 	Get() string
 	Set(string) error
 	ReadOnly() bool
-	Watch() WatcherChan
+	Subscribe() <-chan struct{}
 	Dispose()
 }
 
@@ -34,12 +34,4 @@ func (sp *stringPropertyBase) Set(s string) error {
 
 func (sp *stringPropertyBase) ReadOnly() bool {
 	return sp.Property.ReadOnly()
-}
-
-func (sp *stringPropertyBase) Watch() WatcherChan {
-	return sp.Property.Watch()
-}
-
-func (sp *stringPropertyBase) Dispose() {
-	sp.Property.Dispose()
 }
