@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	"time"
+
 	termbox "github.com/nsf/termbox-go"
 	"github.com/nsf/tulib"
 	log "github.com/sgeb/go-sglog"
@@ -40,6 +42,8 @@ var (
 
 	// Lock on screen drawing
 	mutex sync.Mutex
+
+	fpsCounter *FpsCounter
 )
 
 func Init() error {
@@ -57,6 +61,13 @@ func Init() error {
 
 	internalEventProxying()
 	StartEventPolling()
+
+	fpsCounter = NewFpsCounter(time.Second)
+	go func() {
+		for fps := range fpsCounter.Fps {
+			log.Debug.Println("FPS: ", fps)
+		}
+	}()
 
 	return nil
 }
@@ -114,6 +125,8 @@ func SetFirstResponder(eh Responder) {
 }
 
 func Paint() error {
+	t1 := time.Now()
+
 	err := rootPainter.PaintTo(&rootBuffer, rootBuffer.Rect)
 	if err != nil {
 		return err
@@ -128,6 +141,8 @@ func Paint() error {
 		return err
 	}
 
+	t2 := time.Now()
+	fpsCounter.Timings <- int64(t2.Sub(t1))
 	return nil
 }
 
