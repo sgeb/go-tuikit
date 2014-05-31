@@ -115,9 +115,11 @@ func newRandomString() *randomString {
 
 func (rs *randomString) startRandomness() {
 	go func() {
-		for i := 0; ; i++ {
-			rs.Set(strconv.Itoa(i % 10))
-			time.Sleep(time.Duration(rand.Float64()*5) * time.Second)
+		sleep := time.Duration(rand.Float64() * 2.0 * 1e9)
+
+		for i := uint64(0); ; i++ {
+			rs.Set(strconv.Itoa(int(i % 10)))
+			time.Sleep(sleep)
 		}
 	}()
 }
