@@ -31,7 +31,3 @@ func (sp *stringPropertyBase) Get() string {
 func (sp *stringPropertyBase) Set(s string) error {
 	return sp.Property.Set(s)
 }
-
-func (sp *stringPropertyBase) ReadOnly() bool {
-	return sp.Property.ReadOnly()
-}
