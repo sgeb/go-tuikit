@@ -43,7 +43,9 @@ var (
 	// Lock on screen drawing
 	mutex sync.Mutex
 
-	fpsCounter *FpsCounter
+	fpsCounter    *FpsCounter
+	lastPaintTime time.Time
+	framesSkipped uint64
 )
 
 func Init() error {
@@ -65,7 +67,8 @@ func Init() error {
 	fpsCounter = NewFpsCounter(time.Second)
 	go func() {
 		for fps := range fpsCounter.Fps {
-			log.Debug.Println("FPS: ", fps)
+			log.Debug.Printf("FPS: %v (%v frames skipped)", fps, framesSkipped)
+			framesSkipped = 0
 		}
 	}()
 
@@ -125,7 +128,10 @@ func SetFirstResponder(eh Responder) {
 }
 
 func Paint() error {
-	t1 := time.Now()
+	if time.Now().Sub(lastPaintTime) < time.Second/10 {
+		framesSkipped++
+		return fmt.Errorf("Above 10 FPS, skipping frame")
+	}
 
 	err := rootPainter.PaintTo(&rootBuffer, rootBuffer.Rect)
 	if err != nil {
@@ -141,8 +147,9 @@ func Paint() error {
 		return err
 	}
 
-	t2 := time.Now()
-	fpsCounter.Timings <- int64(t2.Sub(t1))
+	fpsCounter.Ticks <- struct{}{}
+	lastPaintTime = time.Now()
+
 	return nil
 }
 

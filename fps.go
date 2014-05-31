@@ -2,7 +2,9 @@ package tuikit
 
 // Based on https://gist.github.com/remogatto/469721
 
-import "time"
+import (
+	"time"
+)
 
 const (
 	second = 1e9
@@ -10,44 +12,36 @@ const (
 )
 
 type FpsCounter struct {
-	// The channel on which timings are sent from client code. Example:
-	//   t1 := time.Now()
-	//   redraw()
-	//   t2 := time.Now()
-	//   fpsCounter.Timings <- int64(t2.Sub(t1))
-	Timings chan<- int64
+	// The channel on which ticks are sent from client code
+	Ticks chan<- struct{}
 	// Client code receives fps values from this channel
 	Fps <-chan float64
 }
 
 func NewFpsCounter(timeInterval time.Duration) *FpsCounter {
 
-	ticker := time.Tick(timeInterval)
-	timings := make(chan int64)
+	intervalTicker := time.Tick(timeInterval)
+	ticks := make(chan struct{})
 	fps := make(chan float64)
 
-	fpsCounter := &FpsCounter{timings, fps}
+	fpsCounter := &FpsCounter{ticks, fps}
 
 	// Calculate average fps and reset variables every tick
 	go func() {
-		sum := int64(0)
-		numSamples := 0
+		numSamples := uint64(0)
+		perSecond := float64(time.Second) / float64(timeInterval)
 		for {
 			select {
-			case t, ok := <-timings:
+			case _, ok := <-ticks:
 				if !ok {
 					close(fps)
 					return
 				}
-				sum += t
 				numSamples++
 
-			case <-ticker:
-				if numSamples > 0 {
-					avgTime := sum / int64(numSamples)
-					fps <- 1 / (float64(avgTime) / second)
-					sum, numSamples = 0, 0
-				}
+			case <-intervalTicker:
+				fps <- float64(numSamples) * perSecond
+				numSamples = 0
 			}
 		}
 	}()
