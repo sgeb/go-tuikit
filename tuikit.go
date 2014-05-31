@@ -86,7 +86,7 @@ func internalEventProxying() {
 				log.Debug.Println("Received Resize event, clearing screen " +
 					"and setting new size")
 				clearWithDefaultColors()
-				Paint()
+				paintForced()
 				ev.Handled = true
 			case ev.Type == termbox.EventKey && firstResponder != nil:
 				firstResponder.HandleEvent(&ev)
@@ -133,6 +133,10 @@ func Paint() error {
 		return fmt.Errorf("Above 10 FPS, skipping frame")
 	}
 
+	return paintForced()
+}
+
+func paintForced() error {
 	err := rootPainter.PaintTo(&rootBuffer, rootBuffer.Rect)
 	if err != nil {
 		return err
