@@ -27,6 +27,6 @@ func (v *TextView) SetParams(params *tulib.LabelParams) {
 
 func (v *TextView) PaintTo(buffer *tulib.Buffer, rect tulib.Rect) error {
 	clearRect(buffer, rect)
-	buffer.DrawLabel(rect, v.params, []byte(v.text))
+	buffer.DrawLabel(rect, v.params, v.text)
 	return nil
 }
