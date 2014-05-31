@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"strconv"
 	"time"
 
 	"os"
-	"strconv"
+
+	"runtime"
 
 	termbox "github.com/nsf/termbox-go"
 	"github.com/nsf/tulib"
@@ -29,7 +31,13 @@ func main() {
 	tuikit.SetPainter(w)
 	repaint <- struct{}{}
 
-	for i := 0; ; i++ {
+	go func() {
+		for _ = range time.Tick(time.Second) {
+			fmt.Fprintf(os.Stderr, "Nbr of goroutines: %v\n", runtime.NumGoroutine())
+		}
+	}()
+
+	for {
 		select {
 		case ev := <-tuikit.Events:
 			if ev.Handled || ev.Type != termbox.EventKey {
@@ -43,7 +51,6 @@ func main() {
 		case <-quit:
 			return
 		}
-		//		fmt.Fprintf(os.Stderr, "[%d] nbr of goroutines: %d\n", i, runtime.NumGoroutine())
 	}
 }
 
@@ -55,6 +62,7 @@ type window struct {
 	*tuikit.BaseView
 	lastPaintRect tulib.Rect
 	views         []*tuikit.TextView
+	randomStrings []*randomString
 }
 
 func newWindow() *window {
@@ -74,18 +82,24 @@ func (w *window) PaintTo(buffer *tulib.Buffer, rect tulib.Rect) error {
 		diff := ns - len(w.views)
 		if diff > 0 {
 			for i := 0; i < diff; i++ {
-				tv := tuikit.NewTextView()
 				rs := newRandomString()
-				c := rs.Subscribe()
+				tv := tuikit.NewTextView()
+
 				go func() {
-					for _ = range c {
+					for _ = range rs.Subscribe() {
 						tv.SetText(rs.Get())
 					}
 				}()
 				rs.startRandomness()
+
+				w.randomStrings = append(w.randomStrings, rs)
 				w.views = append(w.views, tv)
 			}
 		} else {
+			for _, rs := range w.randomStrings[ns:] {
+				rs.Dispose()
+			}
+			w.randomStrings = w.randomStrings[:ns]
 			w.views = w.views[:ns]
 		}
 
@@ -107,19 +121,34 @@ func (w *window) PaintTo(buffer *tulib.Buffer, rect tulib.Rect) error {
 
 type randomString struct {
 	db.StringProperty
+	stopRandom chan struct{}
 }
 
 func newRandomString() *randomString {
-	return &randomString{db.NewStringProperty()}
+	return &randomString{
+		db.NewStringProperty(),
+		make(chan struct{}),
+	}
 }
 
 func (rs *randomString) startRandomness() {
 	go func() {
-		sleep := time.Duration(rand.Float64() * 2.0 * 1e9)
+		tick := time.Tick(time.Duration(rand.Float64() * 2.0 * 1e9))
+		i := uint64(1)
 
-		for i := uint64(0); ; i++ {
-			rs.Set(strconv.Itoa(int(i % 10)))
-			time.Sleep(sleep)
+		for {
+			select {
+			case <-rs.stopRandom:
+				return
+			case <-tick:
+				rs.Set(strconv.Itoa(int(i % 10)))
+				i++
+			}
 		}
 	}()
+}
+
+func (rs *randomString) Dispose() {
+	rs.stopRandom <- struct{}{}
+	rs.StringProperty.Dispose()
 }
