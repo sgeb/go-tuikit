@@ -140,7 +140,7 @@ func newRandomString() *randomString {
 
 func (rs *randomString) startRandomness() {
 	go func() {
-		tick := time.Tick(time.Duration(rand.Float64() * 2.0 * 1e9))
+		tick := time.Tick(time.Duration((rand.Float64() + 0.1) * 1e9))
 		i := uint64(1)
 
 		for {
