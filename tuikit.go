@@ -28,6 +28,10 @@ type Event struct {
 	Handled bool
 }
 
+const (
+	MaxFps = 10
+)
+
 var (
 	rootPainter    Painter
 	rootBuffer     tulib.Buffer
@@ -44,8 +48,10 @@ var (
 	mutex sync.Mutex
 
 	fpsCounter    *FpsCounter
-	lastPaintTime time.Time
+	paintTimeT0   time.Time
+	paintTimeT1   time.Time
 	framesSkipped uint64
+	errFrameSkip  = fmt.Errorf("Above %v FPS, skipping frame", MaxFps)
 )
 
 func Init() error {
@@ -128,9 +134,10 @@ func SetFirstResponder(eh Responder) {
 }
 
 func Paint() error {
-	if time.Now().Sub(lastPaintTime) < time.Second/10 {
+	paintTimeT1 = time.Now()
+	if paintTimeT1.Sub(paintTimeT0) < time.Second/MaxFps {
 		framesSkipped++
-		return fmt.Errorf("Above 10 FPS, skipping frame")
+		return errFrameSkip
 	}
 
 	return paintForced()
@@ -152,7 +159,7 @@ func paintForced() error {
 	}
 
 	fpsCounter.Ticks <- struct{}{}
-	lastPaintTime = time.Now()
+	paintTimeT0 = paintTimeT1
 
 	return nil
 }
