@@ -14,9 +14,16 @@ import (
 	"github.com/nsf/tulib"
 	tuikit "github.com/sgeb/go-tuikit"
 	db "github.com/sgeb/go-tuikit/databinding"
+
+	"net/http"
+	_ "net/http/pprof"
 )
 
 func main() {
+	go func() {
+		fmt.Fprintln(os.Stderr, http.ListenAndServe("0.0.0.0:6060", nil))
+	}()
+
 	repaint := make(chan struct{}, 1)
 	quit := make(chan struct{}, 1)
 
@@ -126,8 +133,8 @@ type randomString struct {
 
 func newRandomString() *randomString {
 	return &randomString{
-		db.NewStringProperty(),
-		make(chan struct{}),
+		StringProperty: db.NewStringProperty(),
+		stopRandom:     make(chan struct{}, 1),
 	}
 }
 
