@@ -21,8 +21,8 @@ type FpsCounter struct {
 func NewFpsCounter(timeInterval time.Duration) *FpsCounter {
 
 	intervalTicker := time.Tick(timeInterval)
-	ticks := make(chan struct{})
-	fps := make(chan float64)
+	ticks := make(chan struct{}, 1)
+	fps := make(chan float64, 1)
 
 	fpsCounter := &FpsCounter{ticks, fps}
 

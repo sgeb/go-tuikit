@@ -57,7 +57,7 @@ func (p *propertyBase) ReadOnly() bool {
 }
 
 func (p *propertyBase) Subscribe() <-chan struct{} {
-	c := make(chan struct{})
+	c := make(chan struct{}, 1)
 	p.subscriptions = append(p.subscriptions, c)
 	return c
 }
