@@ -1,4 +1,4 @@
-package databinding
+package binding
 
 type StringProperty interface {
 	Get() string
@@ -24,10 +24,10 @@ func NewReadOnlyStringProperty() StringProperty {
 	}
 }
 
-func (sp *stringPropertyBase) Get() string {
-	return sp.Property.Get().(string)
+func (p *stringPropertyBase) Get() string {
+	return p.Property.Get().(string)
 }
 
-func (sp *stringPropertyBase) Set(s string) error {
-	return sp.Property.Set(s)
+func (p *stringPropertyBase) Set(s string) error {
+	return p.Property.Set(s)
 }

@@ -1,9 +1,9 @@
-package databinding
+package binding
 
 import "errors"
 
 var (
-	ErrPropertyReadOnly error = errors.New("read-only property")
+	errPropertyReadOnly error = errors.New("read-only property")
 )
 
 type Property interface {
@@ -40,7 +40,7 @@ func (p *propertyBase) Get() interface{} {
 
 func (p *propertyBase) Set(nv interface{}) error {
 	if p.ReadOnly() {
-		return ErrPropertyReadOnly
+		return errPropertyReadOnly
 	}
 
 	p.val = nv

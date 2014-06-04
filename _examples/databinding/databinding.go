@@ -13,7 +13,7 @@ import (
 	termbox "github.com/nsf/termbox-go"
 	"github.com/nsf/tulib"
 	tuikit "github.com/sgeb/go-tuikit"
-	db "github.com/sgeb/go-tuikit/databinding"
+	"github.com/sgeb/go-tuikit/binding"
 
 	"net/http"
 	_ "net/http/pprof"
@@ -127,13 +127,13 @@ func (w *window) PaintTo(buffer *tulib.Buffer, rect tulib.Rect) error {
 //----------------------------------------------------------------------------
 
 type randomString struct {
-	db.StringProperty
+	binding.StringProperty
 	stopRandom chan struct{}
 }
 
 func newRandomString() *randomString {
 	return &randomString{
-		StringProperty: db.NewStringProperty(),
+		StringProperty: binding.NewStringProperty(),
 		stopRandom:     make(chan struct{}, 1),
 	}
 }
