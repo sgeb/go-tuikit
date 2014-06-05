@@ -12,11 +12,12 @@ import (
 
 	termbox "github.com/nsf/termbox-go"
 	"github.com/nsf/tulib"
-	tuikit "github.com/sgeb/go-tuikit"
-	"github.com/sgeb/go-tuikit/binding"
 
 	"net/http"
 	_ "net/http/pprof"
+
+	"github.com/sgeb/go-tuikit/tuikit"
+	"github.com/sgeb/go-tuikit/tuikit/binding"
 )
 
 func main() {
