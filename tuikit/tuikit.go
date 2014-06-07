@@ -29,7 +29,7 @@ type Event struct {
 }
 
 const (
-	MaxFps = 10
+	MaxFps = 40
 )
 
 var (
