@@ -44,10 +44,10 @@ func main() {
 	for {
 		select {
 		case ev := <-tuikit.Events:
-			if ev.Handled || ev.Type != termbox.EventKey {
+			switch {
+			case ev.Handled || ev.Type != termbox.EventKey:
 				continue
-			}
-			if ev.Ch == 'q' {
+			case ev.Ch == 'q' || ev.Key == termbox.KeyCtrlQ:
 				quit <- struct{}{}
 			}
 		case <-repaint:
