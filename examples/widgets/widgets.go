@@ -20,10 +20,10 @@ func main() {
 		fmt.Fprintln(os.Stderr, http.ListenAndServe("0.0.0.0:6060", nil))
 	}()
 
-	repaint := make(chan struct{}, 1)
 	quit := make(chan struct{}, 1)
 
-	if err := tuikit.Init(); err != nil {
+	repaint, err := tuikit.Init()
+	if err != nil {
 		panic(err)
 	}
 	defer tuikit.Close()
@@ -50,8 +50,6 @@ func main() {
 			case ev.Ch == 'q' || ev.Key == termbox.KeyCtrlQ:
 				quit <- struct{}{}
 			}
-		case <-repaint:
-			tuikit.Paint()
 		case <-quit:
 			return
 		}

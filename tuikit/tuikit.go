@@ -29,7 +29,8 @@ type Event struct {
 }
 
 const (
-	MaxFps = 40
+	MaxFps        = 40
+	frameInterval = time.Second / MaxFps
 )
 
 var (
@@ -40,6 +41,9 @@ var (
 	// Event polling channel
 	Events chan Event = make(chan Event, 20)
 
+	// Paint channel. Clients write to it to request repaint
+	paintChan chan struct{} = make(chan struct{}, 1)
+
 	// Controls event polling
 	internalEvents chan termbox.Event = make(chan termbox.Event, 20)
 	stopPolling    chan struct{}      = make(chan struct{}, 1)
@@ -47,22 +51,25 @@ var (
 	// Lock on screen drawing
 	mutex sync.Mutex
 
-	fpsCounter    *FpsCounter
-	paintTimeT0   time.Time
-	paintTimeT1   time.Time
-	framesSkipped uint64
-	errFrameSkip  = fmt.Errorf("Above %v FPS, skipping frame", MaxFps)
+	fpsCounter      *FpsCounter
+	fpsSkipped      uint
+	shouldSkipFrame bool
+	didSkipFrame    bool
+
+	errFrameSkip = fmt.Errorf("Above %v FPS, skipping frame", MaxFps)
 )
 
-func Init() error {
-	err := termbox.Init()
+func Init() (paint chan<- struct{}, err error) {
+	err = termbox.Init()
 	if err != nil {
-		return fmt.Errorf("Could not init terminal: %v", err)
+		err = fmt.Errorf("Could not init terminal: %v", err)
+		return
 	}
 
 	err = clearWithDefaultColors()
 	if err != nil {
-		return fmt.Errorf("Could not clear terminal: %v", err)
+		err = fmt.Errorf("Could not clear terminal: %v", err)
+		return
 	}
 	termbox.SetInputMode(termbox.InputAlt)
 	hideCursor()
@@ -73,12 +80,19 @@ func Init() error {
 	fpsCounter = NewFpsCounter(time.Second)
 	go func() {
 		for fps := range fpsCounter.Fps {
-			log.Debug.Printf("FPS: %v (%v frames skipped)", fps, framesSkipped)
-			framesSkipped = 0
+			log.Debug.Printf("FPS: %v (%v frames skipped)", fps, fpsSkipped)
+			fpsSkipped = 0
 		}
 	}()
 
-	return nil
+	go func() {
+		for _ = range paintChan {
+			paintThrottled()
+		}
+	}()
+
+	paint = paintChan
+	return
 }
 
 func internalEventProxying() {
@@ -133,12 +147,21 @@ func SetFirstResponder(eh Responder) {
 	firstResponder = eh
 }
 
-func Paint() error {
-	paintTimeT1 = time.Now()
-	if paintTimeT1.Sub(paintTimeT0) < time.Second/MaxFps {
-		framesSkipped++
+func paintThrottled() error {
+	if shouldSkipFrame {
+		didSkipFrame = true
+		fpsSkipped++
 		return errFrameSkip
 	}
+
+	shouldSkipFrame = true
+	time.AfterFunc(frameInterval, func() {
+		shouldSkipFrame = false
+		if didSkipFrame {
+			didSkipFrame = false
+			paintChan <- struct{}{}
+		}
+	})
 
 	return paintForced()
 }
@@ -159,8 +182,6 @@ func paintForced() error {
 	}
 
 	fpsCounter.Ticks <- struct{}{}
-	paintTimeT0 = paintTimeT1
-
 	return nil
 }
 
