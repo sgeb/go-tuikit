@@ -2,6 +2,9 @@
 
 An MVC framework for terminal applications in golang.
 
+[![Build
+Status](https://snap-ci.com/sgeb/go-tuikit/branch/master/build_image)](https://snap-ci.com/sgeb/go-tuikit/branch/master)
+
 ## Credit where credit is due
 
 Tuikit uses code, ideas and inspiration from the following projects:
