@@ -39,8 +39,10 @@ func NewAnchoringView(
 }
 
 func (v *AnchoringView) PaintTo(buffer *tulib.Buffer, rect Rect) error {
-	if err := v.calcSizes(rect); err != nil {
-		return err
+	if !v.LastPaintedRect.Eq(rect) {
+		if err := v.calcSizes(rect); err != nil {
+			return err
+		}
 	}
 
 	return v.BaseView.PaintTo(buffer, rect)
