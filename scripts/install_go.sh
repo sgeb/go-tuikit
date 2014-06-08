@@ -33,3 +33,9 @@ echo -n "Installing dependencies... "
 go get "github.com/nsf/termbox-go"
 go get "github.com/nsf/tulib"
 echo "done"
+
+echo -n "Symlinking repo into GOPATH... "
+LINK_DEST=$GOPATH/src/github.com/sgeb/go-tuikit
+rm -rf $LINK_DEST
+ln -s $(pwd) $LINK_DEST
+echo "done"

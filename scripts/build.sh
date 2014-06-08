@@ -12,16 +12,16 @@ source $(dirname $0)/env.sh
 
 echo "Go version: $(go version)"
 
-OK=1
+FAILED=0
 for p in examples/databinding examples/widgets; do
     echo -n "Building ${p}... "
     (
         cd $p
-        go build || OK=1
+        go build || FAILED=1
     )
     echo "done"
 done
 
-if [ "$OK" == "1" ]; then
+if [ "$FAILED" == "1" ]; then
     exit 1
 fi
