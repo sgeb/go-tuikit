@@ -28,6 +28,6 @@ func (p *stringPropertyBase) Get() string {
 	return p.Property.Get().(string)
 }
 
-func (p *stringPropertyBase) Set(s string) error {
-	return p.Property.Set(s)
+func (p *stringPropertyBase) Set(v string) error {
+	return p.Property.Set(v)
 }

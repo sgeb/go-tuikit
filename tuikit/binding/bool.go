@@ -28,6 +28,6 @@ func (p *boolPropertyBase) Get() bool {
 	return p.Property.Get().(bool)
 }
 
-func (p *boolPropertyBase) Set(s bool) error {
-	return p.Property.Set(s)
+func (p *boolPropertyBase) Set(v bool) error {
+	return p.Property.Set(v)
 }

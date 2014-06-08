@@ -38,12 +38,12 @@ func (p *propertyBase) Get() interface{} {
 	return p.val
 }
 
-func (p *propertyBase) Set(nv interface{}) error {
+func (p *propertyBase) Set(v interface{}) error {
 	if p.ReadOnly() {
 		return errPropertyReadOnly
 	}
 
-	p.val = nv
+	p.val = v
 
 	for _, c := range p.subscriptions {
 		c <- struct{}{}
