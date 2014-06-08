@@ -10,16 +10,29 @@ fi
 
 source $(dirname $0)/env.sh
 
-echo -n "Downloading and preparing go... "
-(
-    # For debugging
-    pwd
-    ls -l
-    ls -l $HOME
+if [ "$TUIKIT_CLEAN_HOME" == "true" ]; then
+    echo -n "Cleaning ${HOME}... "
+    rm -rf $GO_DIST_DIR
+    rm -rf $GOPATH
+    echo "done"
+fi
 
-    GO_ARCHIVE=go1.2.2.linux-amd64.tar.gz
-    mkdir $GO_DIST_DIR
-    cd $GO_DIST_DIR
-    wget -q https://storage.googleapis.com/golang/$GO_ARCHIVE
-    tar xzf $GO_ARCHIVE
-)
+if [ ! -d $GO_DIST_DIR ]; then
+    echo -n "Downloading and preparing go... "
+    (
+        # For debugging
+        pwd
+        ls -l
+        ls -l $HOME
+        ls -l $GO_DIST_DIR
+        ls -l $GO_DIST_DIR/go
+        tree $HOME
+
+        mkdir $GO_DIST_DIR
+        cd $GO_DIST_DIR
+        GO_ARCHIVE=go1.2.2.linux-amd64.tar.gz
+        wget -q https://storage.googleapis.com/golang/$GO_ARCHIVE
+        tar xzf $GO_ARCHIVE
+    )
+    echo "done"
+fi
