@@ -12,7 +12,7 @@ import (
 )
 
 type Painter interface {
-	PaintTo(buffer *tulib.Buffer, rect tulib.Rect) error
+	PaintTo(buffer *tulib.Buffer, rect Rect) error
 	SetPaintSubscriber(cb func())
 }
 
@@ -144,7 +144,7 @@ func Paint() error {
 }
 
 func paintForced() error {
-	err := rootPainter.PaintTo(&rootBuffer, rootBuffer.Rect)
+	err := rootPainter.PaintTo(&rootBuffer, NewRectFromTulib(rootBuffer.Rect))
 	if err != nil {
 		return err
 	}
@@ -171,8 +171,8 @@ func Sync() error {
 	return err
 }
 
-func clearRect(buffer *tulib.Buffer, rect tulib.Rect) {
-	buffer.Fill(rect, termbox.Cell{Ch: ' '})
+func clearRect(buffer *tulib.Buffer, rect Rect) {
+	buffer.Fill(rect.TulibRect(), termbox.Cell{Ch: ' '})
 }
 
 func clearWithDefaultColors() error {

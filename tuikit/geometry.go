@@ -1,6 +1,10 @@
 package tuikit
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/nsf/tulib"
+)
 
 //----------------------------------------------------------------------------
 // Point
@@ -106,6 +110,16 @@ var RectZero Rect
 // NewRect is shorthand for Rect{Point{X, Y}, Size{Width, Height}}.
 func NewRect(x, y, w, h int) Rect {
 	return Rect{NewPoint(x, y), NewSize(w, h)}
+}
+
+// NewRectFromTulib creates a Rect equal to rect.
+func NewRectFromTulib(rect tulib.Rect) Rect {
+	return NewRect(rect.X, rect.Y, rect.Width, rect.Height)
+}
+
+// TulibRect returns r as a tulib.Rect.
+func (r Rect) TulibRect() tulib.Rect {
+	return tulib.Rect{r.X, r.Y, r.Width, r.Height}
 }
 
 // String returns a string representation of r like "(x3,y4)-(w6,h5)".

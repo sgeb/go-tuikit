@@ -4,13 +4,13 @@ import "github.com/nsf/tulib"
 
 type BaseView struct {
 	paintSubscriber   func()
-	childrenRect      map[Painter]tulib.Rect
+	childrenRect      map[Painter]Rect
 	childrenNeedPaint map[Painter]bool
 }
 
 func NewBaseView() *BaseView {
 	return &BaseView{
-		childrenRect:      make(map[Painter]tulib.Rect),
+		childrenRect:      make(map[Painter]Rect),
 		childrenNeedPaint: make(map[Painter]bool),
 	}
 }
@@ -21,10 +21,9 @@ func (v *BaseView) NeedPaint() {
 	}
 }
 
-func (v *BaseView) AttachChild(child Painter, rect tulib.Rect) {
+func (v *BaseView) AttachChild(child Painter, rect Rect) {
 	if r, ok := v.childrenRect[child]; ok {
-		if r.X == rect.X && r.Y == rect.Y &&
-			r.Width == rect.Width && r.Height == rect.Height {
+		if r.Eq(rect) {
 			return
 		}
 	}
@@ -49,13 +48,13 @@ func (v *BaseView) ChildNeedsPaint(child Painter) {
 // Painter Interface
 //----------------------------------------------------------------------------
 
-func (v *BaseView) PaintTo(buffer *tulib.Buffer, rect tulib.Rect) error {
+func (v *BaseView) PaintTo(buffer *tulib.Buffer, rect Rect) error {
 	// BaseView does not paint anything itself
 	for c, r := range v.childrenRect {
 		if !v.childrenNeedPaint[c] {
 			continue
 		}
-		if err := c.PaintTo(buffer, r.Intersection(rect)); err != nil {
+		if err := c.PaintTo(buffer, r.Intersect(rect)); err != nil {
 			return err
 		}
 		delete(v.childrenNeedPaint, c)

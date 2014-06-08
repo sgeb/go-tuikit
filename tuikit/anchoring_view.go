@@ -38,7 +38,7 @@ func NewAnchoringView(
 	}
 }
 
-func (v *AnchoringView) PaintTo(buffer *tulib.Buffer, rect tulib.Rect) error {
+func (v *AnchoringView) PaintTo(buffer *tulib.Buffer, rect Rect) error {
 	if err := v.calcSizes(rect); err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (v *AnchoringView) PaintTo(buffer *tulib.Buffer, rect tulib.Rect) error {
 	return v.BaseView.PaintTo(buffer, rect)
 }
 
-func (v *AnchoringView) calcSizes(rect tulib.Rect) error {
+func (v *AnchoringView) calcSizes(rect Rect) error {
 	var (
 		x, y, w, h     int = rect.X, rect.Y, rect.Width, rect.Height
 		ax, ay, aw, ah int
@@ -81,13 +81,13 @@ func (v *AnchoringView) calcSizes(rect tulib.Rect) error {
 		my = y + h - mh
 	}
 
-	aRect := tulib.Rect{ax, ay, aw, ah}
-	mRect := tulib.Rect{mx, my, mw, mh}
+	aRect := NewRect(ax, ay, aw, ah)
+	mRect := NewRect(mx, my, mw, mh)
 
-	if !aRect.FitsIn(rect) {
+	if !aRect.In(rect) {
 		return fmt.Errorf("Anchor too big, anchor: %v, container: %v", aRect, rect)
 	}
-	if !mRect.FitsIn(rect) {
+	if !mRect.In(rect) {
 		return fmt.Errorf("Main too big, main: %v, container: %v", mRect, rect)
 	}
 

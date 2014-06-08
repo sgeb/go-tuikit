@@ -266,7 +266,7 @@ func (v *TextWidget) cancelInput() {
 	}
 }
 
-func (v *TextWidget) PaintTo(buffer *tulib.Buffer, rect tulib.Rect) error {
+func (v *TextWidget) PaintTo(buffer *tulib.Buffer, rect Rect) error {
 	log.Debug.Printf("Text: %v (len: %v)", string(v.text), len(v.text))
 	log.Debug.Printf("Text: %v", v.text)
 
