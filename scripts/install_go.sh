@@ -22,7 +22,7 @@ if [ ! -d $GO_DIST_DIR ]; then
     echo -n "Downloading and preparing go... "
     (
         # For debugging
-        tree $HOME
+        find $HOME
 
         mkdir $GO_DIST_DIR
         cd $GO_DIST_DIR
