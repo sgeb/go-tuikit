@@ -33,6 +33,7 @@ echo -n "Installing dependencies... "
 go get -u "github.com/nsf/termbox-go"
 go get -u "github.com/nsf/tulib"
 go get -u "github.com/sgeb/go-sglog"
+go get -u "github.com/cloudfoundry/gosigar"
 echo "done"
 
 echo -n "Symlinking repo into GOPATH... "
