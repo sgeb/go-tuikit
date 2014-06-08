@@ -1,14 +1,11 @@
 #!/usr/bin/env bash
 
-set -x
 set -e
 
-if [ "$CI" != "true" ]; then
-    echo "Run only in CI"
-    exit 1
+if [ "$CI" == "true" ]; then
+    set -x
+    source $(dirname $0)/env.sh
 fi
-
-source $(dirname $0)/env.sh
 
 echo "Go version: $(go version)"
 
