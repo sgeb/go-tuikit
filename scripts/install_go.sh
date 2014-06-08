@@ -14,26 +14,22 @@ if [ "$TUIKIT_CLEAN_HOME" == "true" ]; then
     echo -n "Cleaning ${HOME}... "
     rm -rf $GO_DIST_DIR
     rm -rf $GOPATH
-    rm -rf $HOME/dl
     echo "done"
 fi
 
 if [ ! -d $GO_DIST_DIR ]; then
     echo -n "Downloading and preparing go... "
     (
-        # For debugging
-        find $HOME
-
         mkdir $GO_DIST_DIR
         cd $GO_DIST_DIR
         GO_ARCHIVE=go1.2.2.linux-amd64.tar.gz
         wget -q https://storage.googleapis.com/golang/$GO_ARCHIVE
         tar xzf $GO_ARCHIVE
-
-        # For debugging
-        find $HOME
-        echo "\$PATH: $PATH"
-        echo "Which go: $(which go)"
     )
     echo "done"
 fi
+
+echo -n "Installing dependencies... "
+go get "github.com/nsf/termbox-go"
+go get "github.com/nsf/tulib"
+echo "done"
