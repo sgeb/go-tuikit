@@ -30,8 +30,9 @@ if [ ! -d $GO_DIST_DIR ]; then
 fi
 
 echo -n "Installing dependencies... "
-go get "github.com/nsf/termbox-go"
-go get "github.com/nsf/tulib"
+go get -u "github.com/nsf/termbox-go"
+go get -u "github.com/nsf/tulib"
+go get -u "github.com/sgeb/go-sglog"
 echo "done"
 
 echo -n "Symlinking repo into GOPATH... "
