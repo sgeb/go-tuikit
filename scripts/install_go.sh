@@ -14,6 +14,7 @@ if [ "$TUIKIT_CLEAN_HOME" == "true" ]; then
     echo -n "Cleaning ${HOME}... "
     rm -rf $GO_DIST_DIR
     rm -rf $GOPATH
+    rm -rf $HOME/dl
     echo "done"
 fi
 
@@ -21,11 +22,6 @@ if [ ! -d $GO_DIST_DIR ]; then
     echo -n "Downloading and preparing go... "
     (
         # For debugging
-        pwd
-        ls -l
-        ls -l $HOME
-        ls -l $GO_DIST_DIR
-        ls -l $GO_DIST_DIR/go
         tree $HOME
 
         mkdir $GO_DIST_DIR
