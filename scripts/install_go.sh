@@ -37,5 +37,6 @@ echo "done"
 echo -n "Symlinking repo into GOPATH... "
 LINK_DEST=$GOPATH/src/github.com/sgeb/go-tuikit
 rm -rf $LINK_DEST
+mkdir -p $(dirname $LINK_DEST)
 ln -s $(pwd) $LINK_DEST
 echo "done"
