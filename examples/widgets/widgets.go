@@ -64,8 +64,7 @@ func main() {
 
 type window struct {
 	*tuikit.BaseView
-	textWidget    *tuikit.TextWidget
-	lastPaintRect tuikit.Rect
+	textWidget *tuikit.TextWidget
 }
 
 func newWindow() *window {
@@ -76,11 +75,10 @@ func newWindow() *window {
 }
 
 func (w *window) PaintTo(buffer *tulib.Buffer, rect tuikit.Rect) error {
-	if !w.lastPaintRect.Eq(rect) {
+	if !w.LastPaintedRect.Eq(rect) {
 		r := rect
 		r.X++
 		w.AttachChild(w.textWidget, r)
-		w.lastPaintRect = rect
 	}
 
 	return w.BaseView.PaintTo(buffer, rect)

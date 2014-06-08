@@ -68,7 +68,6 @@ func main() {
 
 type window struct {
 	*tuikit.BaseView
-	lastPaintRect tuikit.Rect
 	views         []*tuikit.TextView
 	randomStrings []*randomString
 }
@@ -80,7 +79,7 @@ func newWindow() *window {
 }
 
 func (w *window) PaintTo(buffer *tulib.Buffer, rect tuikit.Rect) error {
-	if !w.lastPaintRect.Eq(rect) {
+	if !w.LastPaintedRect.Eq(rect) {
 		for _, v := range w.views {
 			w.DetachChild(v)
 		}
@@ -115,8 +114,6 @@ func (w *window) PaintTo(buffer *tulib.Buffer, rect tuikit.Rect) error {
 			dy := int(i / rect.Width)
 			w.AttachChild(v, tuikit.NewRect(dx, dy, 1, 1))
 		}
-
-		w.lastPaintRect = rect
 	}
 
 	return w.BaseView.PaintTo(buffer, rect)

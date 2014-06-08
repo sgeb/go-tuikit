@@ -3,6 +3,7 @@ package tuikit
 import "github.com/nsf/tulib"
 
 type BaseView struct {
+	LastPaintedRect   Rect
 	paintSubscriber   func()
 	childrenRect      map[Painter]Rect
 	childrenNeedPaint map[Painter]bool
@@ -60,6 +61,7 @@ func (v *BaseView) PaintTo(buffer *tulib.Buffer, rect Rect) error {
 		delete(v.childrenNeedPaint, c)
 	}
 
+	v.LastPaintedRect = rect
 	return nil
 }
 
