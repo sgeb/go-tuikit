@@ -15,10 +15,9 @@ echo "Go version: $(go version)"
 FAILED=0
 for p in examples/databinding examples/widgets; do
     echo -n "Building ${p}... "
-    (
-        cd $p
-        go build || FAILED=1
-    )
+    cd $p
+    go build || FAILED=1
+    cd -
     echo "done"
 done
 
