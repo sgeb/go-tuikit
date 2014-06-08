@@ -12,7 +12,11 @@ Tuikit uses code, ideas and inspiration from the following projects:
 * [termbox](https://github.com/nsf/termbox-go)
 * [tulib](https://github.com/nsf/tulib)
 * [walk](https://github.com/lxn/walk)
+* [gist:469721](https://gist.github.com/remogatto/469721)
 * Some parts of golang itself, such as image's `Point`
+* A lot of snippets from
+  [golang-nuts](https://groups.google.com/forum/#!forum/golang-nuts) and [Stack
+  Overflow](http://stackoverflow.com/)
 
 Thanks to the original authors for making their code available. Without their
 contributions to open source, tuikit would not have turned out the way it has.
