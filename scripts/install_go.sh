@@ -29,6 +29,11 @@ if [ ! -d $GO_DIST_DIR ]; then
         GO_ARCHIVE=go1.2.2.linux-amd64.tar.gz
         wget -q https://storage.googleapis.com/golang/$GO_ARCHIVE
         tar xzf $GO_ARCHIVE
+
+        # For debugging
+        find $HOME
+        echo "\$PATH: $PATH"
+        echo "Which go: $(which go)"
     )
     echo "done"
 fi
