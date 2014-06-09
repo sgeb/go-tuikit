@@ -119,7 +119,12 @@ func NewRectFromTulib(rect tulib.Rect) Rect {
 
 // TulibRect returns r as a tulib.Rect.
 func (r Rect) TulibRect() tulib.Rect {
-	return tulib.Rect{r.X, r.Y, r.Width, r.Height}
+	return tulib.Rect{
+		X:      r.X,
+		Y:      r.Y,
+		Width:  r.Width,
+		Height: r.Height,
+	}
 }
 
 // String returns a string representation of r like "(x3,y4)-(w6,h5)".
