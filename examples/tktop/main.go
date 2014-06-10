@@ -9,8 +9,6 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
-	"strconv"
-
 	"time"
 
 	"github.com/nsf/tulib"
@@ -35,7 +33,7 @@ func main() {
 	cpu := NewCpu()
 	w := newWindow()
 	w.SetModel(cpu)
-	cpu.Start(3 * time.Second)
+	cpu.Start(2 * time.Second)
 	w.SetPaintSubscriber(func() { repaint <- struct{}{} })
 	tuikit.SetPainter(w)
 	repaint <- struct{}{}
@@ -62,46 +60,31 @@ func main() {
 type window struct {
 	*tuikit.BaseView
 
-	user    *tuikit.TextView
-	nice    *tuikit.TextView
-	sys     *tuikit.TextView
-	idle    *tuikit.TextView
-	wait    *tuikit.TextView
-	irq     *tuikit.TextView
-	softIrq *tuikit.TextView
-	stolen  *tuikit.TextView
+	user *tuikit.TextView
+	sys  *tuikit.TextView
+	idle *tuikit.TextView
 }
 
 func newWindow() *window {
 	return &window{
 		BaseView: tuikit.NewBaseView(),
 		user:     tuikit.NewTextView(),
-		nice:     tuikit.NewTextView(),
 		sys:      tuikit.NewTextView(),
 		idle:     tuikit.NewTextView(),
-		wait:     tuikit.NewTextView(),
-		irq:      tuikit.NewTextView(),
-		softIrq:  tuikit.NewTextView(),
-		stolen:   tuikit.NewTextView(),
 	}
 }
 
 func (w *window) SetModel(model *Cpu) {
-	for p, v := range map[binding.Uint64Property]*tuikit.TextView{
-		model.User:    w.user,
-		model.Nice:    w.nice,
-		model.Sys:     w.sys,
-		model.Idle:    w.idle,
-		model.Wait:    w.wait,
-		model.Irq:     w.irq,
-		model.SoftIrq: w.softIrq,
-		model.Stolen:  w.stolen} {
+	for p, v := range map[binding.Float32Property]*tuikit.TextView{
+		model.User: w.user,
+		model.Sys:  w.sys,
+		model.Idle: w.idle} {
 		p := p
 		v := v
 		c := p.Subscribe()
 		go func() {
 			for _ = range c {
-				s := strconv.FormatUint(p.Get(), 10)
+				s := fmt.Sprintf("%5.2f %%", p.Get())
 				v.SetText(s)
 			}
 		}()
@@ -111,8 +94,7 @@ func (w *window) SetModel(model *Cpu) {
 func (w *window) PaintTo(buffer *tulib.Buffer, rect tuikit.Rect) error {
 	if !w.LastPaintedRect.Eq(rect) {
 		for i, v := range []*tuikit.TextView{
-			w.user, w.nice, w.sys, w.idle,
-			w.wait, w.irq, w.softIrq, w.stolen} {
+			w.user, w.sys, w.idle} {
 			r := rect
 			r.Y, r.Height = i, 1
 			w.AttachChild(v, r)
