@@ -2,8 +2,7 @@ package binding
 
 type ByteProperty interface {
 	Get() byte
-	Set(byte) error
-	ReadOnly() bool
+	Set(byte)
 	Subscribe() <-chan struct{}
 	Dispose()
 }
@@ -17,17 +16,10 @@ func NewByteProperty() ByteProperty {
 		NewProperty(),
 	}
 }
-
-func NewReadOnlyByteProperty() ByteProperty {
-	return &bytePropertyBase{
-		NewReadOnlyProperty(),
-	}
-}
-
 func (p *bytePropertyBase) Get() byte {
 	return p.Property.Get().(byte)
 }
 
-func (p *bytePropertyBase) Set(v byte) error {
-	return p.Property.Set(v)
+func (p *bytePropertyBase) Set(v byte) {
+	p.Property.Set(v)
 }

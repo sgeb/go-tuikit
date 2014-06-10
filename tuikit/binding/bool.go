@@ -2,8 +2,7 @@ package binding
 
 type BoolProperty interface {
 	Get() bool
-	Set(bool) error
-	ReadOnly() bool
+	Set(bool)
 	Subscribe() <-chan struct{}
 	Dispose()
 }
@@ -18,16 +17,10 @@ func NewBoolProperty() BoolProperty {
 	}
 }
 
-func NewReadOnlyBoolProperty() BoolProperty {
-	return &boolPropertyBase{
-		NewReadOnlyProperty(),
-	}
-}
-
 func (p *boolPropertyBase) Get() bool {
 	return p.Property.Get().(bool)
 }
 
-func (p *boolPropertyBase) Set(v bool) error {
-	return p.Property.Set(v)
+func (p *boolPropertyBase) Set(v bool) {
+	p.Property.Set(v)
 }

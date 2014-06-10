@@ -2,8 +2,7 @@ package binding
 
 type Uint64Property interface {
 	Get() uint64
-	Set(uint64) error
-	ReadOnly() bool
+	Set(uint64)
 	Subscribe() <-chan struct{}
 	Dispose()
 }
@@ -18,16 +17,10 @@ func NewUint64Property() Uint64Property {
 	}
 }
 
-func NewReadOnlyUint64Property() Uint64Property {
-	return &uint64PropertyBase{
-		NewReadOnlyProperty(),
-	}
-}
-
 func (p *uint64PropertyBase) Get() uint64 {
 	return p.Property.Get().(uint64)
 }
 
-func (p *uint64PropertyBase) Set(v uint64) error {
-	return p.Property.Set(v)
+func (p *uint64PropertyBase) Set(v uint64) {
+	p.Property.Set(v)
 }

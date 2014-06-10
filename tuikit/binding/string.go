@@ -2,8 +2,7 @@ package binding
 
 type StringProperty interface {
 	Get() string
-	Set(string) error
-	ReadOnly() bool
+	Set(string)
 	Subscribe() <-chan struct{}
 	Dispose()
 }
@@ -18,16 +17,10 @@ func NewStringProperty() StringProperty {
 	}
 }
 
-func NewReadOnlyStringProperty() StringProperty {
-	return &stringPropertyBase{
-		NewReadOnlyProperty(),
-	}
-}
-
 func (p *stringPropertyBase) Get() string {
 	return p.Property.Get().(string)
 }
 
-func (p *stringPropertyBase) Set(v string) error {
-	return p.Property.Set(v)
+func (p *stringPropertyBase) Set(v string) {
+	p.Property.Set(v)
 }
