@@ -1,5 +1,9 @@
 .idea/
 go-tuikit.iml
+*.log
+examples/databinding/databinding
+examples/tktop/tktop
+examples/widgets/widgets
 
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o
