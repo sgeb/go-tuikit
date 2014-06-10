@@ -21,33 +21,21 @@ func main() {
 		fmt.Fprintln(os.Stderr, http.ListenAndServe("0.0.0.0:6060", nil))
 	}()
 
-	quit := make(chan struct{}, 1)
-
-	repaint, err := tuikit.Init()
-	if err != nil {
+	if err := tuikit.Init(); err != nil {
 		panic(err)
 	}
 	defer tuikit.Close()
 
 	fmt.Fprintln(os.Stderr, "-----\nStarting")
-	cpu := NewCpu()
 	w := newWindow()
-	w.SetModel(cpu)
-	cpu.Start(2 * time.Second)
-	w.SetPaintSubscriber(func() { repaint <- struct{}{} })
+	w.SetModel(NewCpu(2 * time.Second))
 	tuikit.SetPainter(w)
-	repaint <- struct{}{}
 
-	for {
-		select {
-		case ev := <-tuikit.Events:
-			switch {
-			case ev.Handled || ev.Type != termbox.EventKey:
-				continue
-			case ev.Ch == 'q' || ev.Key == termbox.KeyCtrlQ:
-				quit <- struct{}{}
-			}
-		case <-quit:
+	for ev := range tuikit.Events {
+		switch {
+		case ev.Handled || ev.Type != termbox.EventKey:
+			continue
+		case ev.Ch == 'q' || ev.Key == termbox.KeyCtrlQ:
 			return
 		}
 	}
@@ -75,17 +63,30 @@ func newWindow() *window {
 }
 
 func (w *window) SetModel(model *Cpu) {
-	for p, v := range map[binding.Float32Property]*tuikit.TextView{
+	// The function to set text on view
+	setText := func(v *tuikit.TextView, f float32) {
+		s := fmt.Sprintf("%5.2f %%", f)
+		v.SetText(s)
+	}
+
+	// For convenience while iterating
+	propToView := map[binding.Float32Property]*tuikit.TextView{
 		model.User: w.user,
 		model.Sys:  w.sys,
-		model.Idle: w.idle} {
+		model.Idle: w.idle}
+
+	for p, v := range propToView {
+		// Set text right away to show content
+		setText(v, p.Get())
+
+		// Need to make copies for the goroutine
 		p := p
 		v := v
-		c := p.Subscribe()
+
+		// Subscribe and set text on change
 		go func() {
-			for _ = range c {
-				s := fmt.Sprintf("%5.2f %%", p.Get())
-				v.SetText(s)
+			for _ = range p.Subscribe() {
+				setText(v, p.Get())
 			}
 		}()
 	}
@@ -93,11 +94,8 @@ func (w *window) SetModel(model *Cpu) {
 
 func (w *window) PaintTo(buffer *tulib.Buffer, rect tuikit.Rect) error {
 	if !w.LastPaintedRect.Eq(rect) {
-		for i, v := range []*tuikit.TextView{
-			w.user, w.sys, w.idle} {
-			r := rect
-			r.Y, r.Height = i, 1
-			w.AttachChild(v, r)
+		for i, v := range []*tuikit.TextView{w.user, w.sys, w.idle} {
+			w.AttachChild(v, tuikit.NewRect(0, i, rect.Width, 1))
 		}
 	}
 

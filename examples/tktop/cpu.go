@@ -3,9 +3,6 @@ package main
 import (
 	"time"
 
-	"fmt"
-	"os"
-
 	sigar "github.com/cloudfoundry/gosigar"
 	"github.com/sgeb/go-tuikit/tuikit/binding"
 )
@@ -15,23 +12,24 @@ type Cpu struct {
 	Sys  binding.Float32Property
 	Idle binding.Float32Property
 
-	cpu sigar.Cpu
+	interval time.Duration
+	cpu      sigar.Cpu
 
 	lastUser  uint64
 	lastSys   uint64
 	lastIdle  uint64
 	lastTotal uint64
-
-	stop chan struct{}
 }
 
-func NewCpu() *Cpu {
-	return &Cpu{
-		User: binding.NewFloat32Property(),
-		Sys:  binding.NewFloat32Property(),
-		Idle: binding.NewFloat32Property(),
-		stop: make(chan struct{}),
+func NewCpu(interval time.Duration) *Cpu {
+	c := &Cpu{
+		User:     binding.NewFloat32Property(),
+		Sys:      binding.NewFloat32Property(),
+		Idle:     binding.NewFloat32Property(),
+		interval: interval,
 	}
+	c.start()
+	return c
 }
 
 func (c *Cpu) get() error {
@@ -61,22 +59,11 @@ func (c *Cpu) get() error {
 	return nil
 }
 
-func (c *Cpu) Start(interval time.Duration) {
+func (c *Cpu) start() {
 	c.get()
 	go func() {
-		ticker := time.Tick(interval)
-		for {
-			select {
-			case <-ticker:
-				fmt.Fprintln(os.Stderr, "tick")
-				c.get()
-			case <-c.stop:
-				return
-			}
+		for _ = range time.Tick(c.interval) {
+			c.get()
 		}
 	}()
-}
-
-func (c *Cpu) Stop() {
-	c.stop <- struct{}{}
 }

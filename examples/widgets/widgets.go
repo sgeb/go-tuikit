@@ -20,20 +20,15 @@ func main() {
 		fmt.Fprintln(os.Stderr, http.ListenAndServe("0.0.0.0:6060", nil))
 	}()
 
-	quit := make(chan struct{}, 1)
-
-	repaint, err := tuikit.Init()
-	if err != nil {
+	if err := tuikit.Init(); err != nil {
 		panic(err)
 	}
 	defer tuikit.Close()
 
 	fmt.Fprintln(os.Stderr, "-----\nStarting")
 	w := newWindow()
-	w.SetPaintSubscriber(func() { repaint <- struct{}{} })
 	tuikit.SetPainter(w)
 	tuikit.SetFirstResponder(w.textWidget)
-	repaint <- struct{}{}
 
 	go func() {
 		for _ = range time.Tick(time.Second) {
@@ -41,16 +36,11 @@ func main() {
 		}
 	}()
 
-	for {
-		select {
-		case ev := <-tuikit.Events:
-			switch {
-			case ev.Handled || ev.Type != termbox.EventKey:
-				continue
-			case ev.Ch == 'q' || ev.Key == termbox.KeyCtrlQ:
-				quit <- struct{}{}
-			}
-		case <-quit:
+	for ev := range tuikit.Events {
+		switch {
+		case ev.Handled || ev.Type != termbox.EventKey:
+			continue
+		case ev.Ch == 'q' || ev.Key == termbox.KeyCtrlQ:
 			return
 		}
 	}

@@ -59,17 +59,15 @@ var (
 	errFrameSkip = fmt.Errorf("Above %v FPS, skipping frame", MaxFps)
 )
 
-func Init() (paint chan<- struct{}, err error) {
-	err = termbox.Init()
+func Init() error {
+	err := termbox.Init()
 	if err != nil {
-		err = fmt.Errorf("Could not init terminal: %v", err)
-		return
+		return fmt.Errorf("Could not init terminal: %v", err)
 	}
 
 	err = clearWithDefaultColors()
 	if err != nil {
-		err = fmt.Errorf("Could not clear terminal: %v", err)
-		return
+		return fmt.Errorf("Could not clear terminal: %v", err)
 	}
 	termbox.SetInputMode(termbox.InputAlt)
 	hideCursor()
@@ -91,8 +89,7 @@ func Init() (paint chan<- struct{}, err error) {
 		}
 	}()
 
-	paint = paintChan
-	return
+	return nil
 }
 
 func internalEventProxying() {
@@ -135,6 +132,8 @@ func StopEventPolling() {
 
 func SetPainter(p Painter) {
 	rootPainter = p
+	rootPainter.SetPaintSubscriber(func() { paintChan <- struct{}{} })
+	paintChan <- struct{}{}
 }
 
 func SetFirstResponder(eh Responder) {
