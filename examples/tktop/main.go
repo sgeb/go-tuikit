@@ -48,24 +48,34 @@ func main() {
 type window struct {
 	*tuikit.BaseView
 
-	user *tuikit.TextView
-	sys  *tuikit.TextView
-	idle *tuikit.TextView
+	userLabel *tuikit.TextView
+	user      *tuikit.TextView
+	sysLabel  *tuikit.TextView
+	sys       *tuikit.TextView
+	idleLabel *tuikit.TextView
+	idle      *tuikit.TextView
 }
 
 func newWindow() *window {
-	return &window{
-		BaseView: tuikit.NewBaseView(),
-		user:     tuikit.NewTextView(),
-		sys:      tuikit.NewTextView(),
-		idle:     tuikit.NewTextView(),
+	w := &window{
+		BaseView:  tuikit.NewBaseView(),
+		userLabel: tuikit.NewTextView(),
+		user:      tuikit.NewTextView(),
+		sysLabel:  tuikit.NewTextView(),
+		sys:       tuikit.NewTextView(),
+		idleLabel: tuikit.NewTextView(),
+		idle:      tuikit.NewTextView(),
 	}
+	w.userLabel.SetText("User: ")
+	w.sysLabel.SetText("System: ")
+	w.idleLabel.SetText("Idle: ")
+	return w
 }
 
 func (w *window) SetModel(model *Cpu) {
 	// The function to set text on view
 	setText := func(v *tuikit.TextView, f float32) {
-		s := fmt.Sprintf("%5.2f %%", f)
+		s := fmt.Sprintf("%6.2f %%", f)
 		v.SetText(s)
 	}
 
@@ -94,8 +104,11 @@ func (w *window) SetModel(model *Cpu) {
 
 func (w *window) PaintTo(buffer *tulib.Buffer, rect tuikit.Rect) error {
 	if !w.LastPaintedRect.Eq(rect) {
-		for i, v := range []*tuikit.TextView{w.user, w.sys, w.idle} {
+		for i, v := range []*tuikit.TextView{w.userLabel, w.sysLabel, w.idleLabel} {
 			w.AttachChild(v, tuikit.NewRect(0, i, rect.Width, 1))
+		}
+		for i, v := range []*tuikit.TextView{w.user, w.sys, w.idle} {
+			w.AttachChild(v, tuikit.NewRect(8, i, rect.Width, 1))
 		}
 	}
 
