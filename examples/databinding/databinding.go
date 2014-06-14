@@ -11,7 +11,6 @@ import (
 	"runtime"
 
 	termbox "github.com/nsf/termbox-go"
-	"github.com/nsf/tulib"
 
 	"net/http"
 	_ "net/http/pprof"
@@ -60,50 +59,50 @@ type window struct {
 }
 
 func newWindow() *window {
-	return &window{
+	w := &window{
 		BaseView: tuikit.NewBaseView(),
 	}
+	w.SetUpdateChildrenRect(w.updateChildrenRect)
+	return w
 }
 
-func (w *window) PaintTo(buffer *tulib.Buffer, rect tuikit.Rect) error {
-	if !w.LastPaintedRect.Eq(rect) {
-		for _, v := range w.views {
-			w.DetachChild(v)
-		}
-
-		ns := rect.Width * rect.Height
-		diff := ns - len(w.views)
-		if diff > 0 {
-			for i := 0; i < diff; i++ {
-				rs := newRandomString()
-				tv := tuikit.NewTextView()
-
-				go func() {
-					for _ = range rs.Subscribe() {
-						tv.SetText(rs.Get())
-					}
-				}()
-				rs.startRandomness()
-
-				w.randomStrings = append(w.randomStrings, rs)
-				w.views = append(w.views, tv)
-			}
-		} else {
-			for _, rs := range w.randomStrings[ns:] {
-				rs.Dispose()
-			}
-			w.randomStrings = w.randomStrings[:ns]
-			w.views = w.views[:ns]
-		}
-
-		for i, v := range w.views {
-			dx := int(i % rect.Width)
-			dy := int(i / rect.Width)
-			w.AttachChild(v, tuikit.NewRect(dx, dy, 1, 1))
-		}
+func (w *window) updateChildrenRect(rect tuikit.Rect) error {
+	for _, v := range w.views {
+		w.DetachChild(v)
 	}
 
-	return w.BaseView.PaintTo(buffer, rect)
+	ns := rect.Width * rect.Height
+	diff := ns - len(w.views)
+	if diff > 0 {
+		for i := 0; i < diff; i++ {
+			rs := newRandomString()
+			tv := tuikit.NewTextView()
+
+			go func() {
+				for _ = range rs.Subscribe() {
+					tv.SetText(rs.Get())
+				}
+			}()
+			rs.startRandomness()
+
+			w.randomStrings = append(w.randomStrings, rs)
+			w.views = append(w.views, tv)
+		}
+	} else {
+		for _, rs := range w.randomStrings[ns:] {
+			rs.Dispose()
+		}
+		w.randomStrings = w.randomStrings[:ns]
+		w.views = w.views[:ns]
+	}
+
+	for i, v := range w.views {
+		dx := int(i % rect.Width)
+		dy := int(i / rect.Width)
+		w.AttachChild(v, tuikit.NewRect(dx, dy, 1, 1))
+	}
+
+	return nil
 }
 
 //----------------------------------------------------------------------------

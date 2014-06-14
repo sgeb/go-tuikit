@@ -14,6 +14,7 @@ import (
 type Painter interface {
 	PaintTo(buffer *tulib.Buffer, rect Rect) error
 	SetPaintSubscriber(cb func())
+	SetResizeSubscriber(cb func())
 }
 
 type Responder interface {

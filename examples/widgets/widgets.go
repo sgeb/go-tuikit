@@ -11,7 +11,6 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
-	"github.com/nsf/tulib"
 	"github.com/sgeb/go-tuikit/tuikit"
 )
 
@@ -56,18 +55,17 @@ type window struct {
 }
 
 func newWindow() *window {
-	return &window{
+	w := &window{
 		BaseView:   tuikit.NewBaseView(),
 		textWidget: tuikit.NewTextWidget(),
 	}
+	w.SetUpdateChildrenRect(w.updateChildrenRect)
+	return w
 }
 
-func (w *window) PaintTo(buffer *tulib.Buffer, rect tuikit.Rect) error {
-	if !w.LastPaintedRect.Eq(rect) {
-		r := rect
-		r.X++
-		w.AttachChild(w.textWidget, r)
-	}
-
-	return w.BaseView.PaintTo(buffer, rect)
+func (w *window) updateChildrenRect(rect tuikit.Rect) error {
+	r := rect
+	r.X++
+	w.AttachChild(w.textWidget, r)
+	return nil
 }

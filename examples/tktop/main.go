@@ -10,8 +10,6 @@ import (
 	_ "net/http/pprof"
 
 	"time"
-
-	"github.com/nsf/tulib"
 	"github.com/sgeb/go-tuikit/tuikit"
 	"github.com/sgeb/go-tuikit/tuikit/binding"
 )
@@ -69,6 +67,7 @@ func newWindow() *window {
 	w.userLabel.SetText("User: ")
 	w.sysLabel.SetText("System: ")
 	w.idleLabel.SetText("Idle: ")
+	w.SetUpdateChildrenRect(w.updateChildrenRect)
 	return w
 }
 
@@ -102,15 +101,12 @@ func (w *window) SetModel(model *Cpu) {
 	}
 }
 
-func (w *window) PaintTo(buffer *tulib.Buffer, rect tuikit.Rect) error {
-	if !w.LastPaintedRect.Eq(rect) {
-		for i, v := range []*tuikit.TextView{w.userLabel, w.sysLabel, w.idleLabel} {
-			w.AttachChild(v, tuikit.NewRect(0, i, rect.Width, 1))
-		}
-		for i, v := range []*tuikit.TextView{w.user, w.sys, w.idle} {
-			w.AttachChild(v, tuikit.NewRect(8, i, rect.Width, 1))
-		}
+func (w *window) updateChildrenRect(rect tuikit.Rect) error {
+	for i, v := range []*tuikit.TextView{w.userLabel, w.sysLabel, w.idleLabel} {
+		w.AttachChild(v, tuikit.NewRect(0, i, rect.Width, 1))
 	}
-
-	return w.BaseView.PaintTo(buffer, rect)
+	for i, v := range []*tuikit.TextView{w.user, w.sys, w.idle} {
+		w.AttachChild(v, tuikit.NewRect(8, i, rect.Width, 1))
+	}
+	return nil
 }

@@ -1,10 +1,6 @@
 package tuikit
 
-import (
-	"fmt"
-
-	"github.com/nsf/tulib"
-)
+import "fmt"
 
 type AnchorEdge uint
 
@@ -29,26 +25,18 @@ func NewAnchoringView(
 	anchorWidth int,
 	anchor, main Painter,
 ) *AnchoringView {
-	return &AnchoringView{
+	v := &AnchoringView{
 		BaseView:    NewBaseView(),
 		anchorEdge:  anchorEdge,
 		anchorWidth: anchorWidth,
 		anchor:      anchor,
 		main:        main,
 	}
+	v.SetUpdateChildrenRect(v.updateChildrenRect)
+	return v
 }
 
-func (v *AnchoringView) PaintTo(buffer *tulib.Buffer, rect Rect) error {
-	if !v.LastPaintedRect.Eq(rect) {
-		if err := v.calcSizes(rect); err != nil {
-			return err
-		}
-	}
-
-	return v.BaseView.PaintTo(buffer, rect)
-}
-
-func (v *AnchoringView) calcSizes(rect Rect) error {
+func (v *AnchoringView) updateChildrenRect(rect Rect) error {
 	var (
 		x, y, w, h     int = rect.X, rect.Y, rect.Width, rect.Height
 		ax, ay, aw, ah int
