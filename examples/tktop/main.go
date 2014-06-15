@@ -10,6 +10,7 @@ import (
 	_ "net/http/pprof"
 
 	"time"
+
 	"github.com/sgeb/go-tuikit/tuikit"
 	"github.com/sgeb/go-tuikit/tuikit/binding"
 )

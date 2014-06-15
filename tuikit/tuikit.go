@@ -13,6 +13,7 @@ import (
 
 type Painter interface {
 	PaintTo(buffer *tulib.Buffer, rect Rect) error
+	DesiredMinSize() Size
 	SetPaintSubscriber(cb func())
 	SetResizeSubscriber(cb func())
 }

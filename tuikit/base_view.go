@@ -90,6 +90,10 @@ func (v *BaseView) PaintTo(buffer *tulib.Buffer, rect Rect) error {
 	return nil
 }
 
+func (v *BaseView) DesiredMinSize() Size {
+	return NewSize(1, 1)
+}
+
 func (v *BaseView) SetPaintSubscriber(cb func()) {
 	v.paintSubscriber = cb
 }
