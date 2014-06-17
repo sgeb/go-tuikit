@@ -71,6 +71,10 @@ func (v *BaseView) SetUpdateChildrenRect(cb func(Rect) error) {
 // to its children
 func (v *BaseView) PaintTo(buffer *tulib.Buffer, rect Rect) error {
 	if !v.lastPaintedRect.Eq(rect) || v.childrenNeedResize {
+		if v.updateChildrenRect == nil {
+			return fmt.Errorf("v.updateChildrenRect is null")
+		}
+
 		if err := v.updateChildrenRect(rect); err != nil {
 			return fmt.Errorf("Error when updateChildrenRect: %v", err)
 		}
