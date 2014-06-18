@@ -17,7 +17,7 @@ func NewFillerView(proto termbox.Cell) *FillerView {
 	}
 }
 
-func (v *FillerView) PaintTo(buffer *tulib.Buffer, rect tulib.Rect) error {
-	buffer.Fill(rect, v.proto)
+func (v *FillerView) PaintTo(buffer *tulib.Buffer, rect Rect) error {
+	buffer.Fill(rect.TulibRect(), v.proto)
 	return nil
 }
