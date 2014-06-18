@@ -10,7 +10,7 @@ fi
 echo "Go version: $(go version)"
 
 FAILED_ALL=0
-for p in examples/databinding examples/widgets examples/tktop; do
+for p in examples/databinding examples/widgets examples/tktop examples/stacker; do
     FAILED=0
     echo -n "=> Building ${p}... "
     cd $p

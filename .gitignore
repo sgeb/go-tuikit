@@ -4,6 +4,7 @@ go-tuikit.iml
 examples/databinding/databinding
 examples/tktop/tktop
 examples/widgets/widgets
+examples/stacker/stacker
 
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o
