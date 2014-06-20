@@ -25,21 +25,3 @@ func NewProgressSpinner() *ProgressSpinner {
 
 	return ps
 }
-
-func NewProgressSpinnerStyle1() *ProgressSpinner {
-	ps := NewProgressSpinner()
-	ps.spinRunes = []rune{'𝍖', '𝍔', '𝍎', '𝌼', '𝌆'}
-	return ps
-}
-
-func NewProgressSpinnerStyle1Reverse() *ProgressSpinner {
-	ps := NewProgressSpinner()
-	ps.spinRunes = []rune{'𝍖', '𝍔', '𝍎', '𝌼', '𝌆', '𝌼', '𝍎', '𝍔'}
-	return ps
-}
-
-func NewProgressSpinnerStyle2Reverse() *ProgressSpinner {
-	ps := NewProgressSpinner()
-	ps.spinRunes = []rune{'䷁', '䷗', '䷒', '䷊', '䷡', '䷪', '䷀', '䷪', '䷡', '䷊', '䷒', '䷗'}
-	return ps
-}
