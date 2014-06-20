@@ -71,5 +71,11 @@ func (w *window) updateChildrenRect(rect tuikit.Rect) error {
 	w.AttachChild(w.textWidget, r)
 	r.Y++
 	w.AttachChild(w.spinner, r)
+	r.Y++
+	w.AttachChild(tuikit.NewProgressSpinnerStyle1(), r)
+	r.Y++
+	w.AttachChild(tuikit.NewProgressSpinnerStyle1Reverse(), r)
+	r.Y++
+	w.AttachChild(tuikit.NewProgressSpinnerStyle2Reverse(), r)
 	return nil
 }
