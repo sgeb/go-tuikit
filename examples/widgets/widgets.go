@@ -52,12 +52,14 @@ func main() {
 type window struct {
 	*tuikit.BaseView
 	textWidget *tuikit.TextWidget
+	spinner    *tuikit.ProgressSpinner
 }
 
 func newWindow() *window {
 	w := &window{
 		BaseView:   tuikit.NewBaseView(),
 		textWidget: tuikit.NewTextWidget(),
+		spinner:    tuikit.NewProgressSpinner(),
 	}
 	w.SetUpdateChildrenRect(w.updateChildrenRect)
 	return w
@@ -65,7 +67,9 @@ func newWindow() *window {
 
 func (w *window) updateChildrenRect(rect tuikit.Rect) error {
 	r := rect
-	r.X++
+	r.Y++
 	w.AttachChild(w.textWidget, r)
+	r.Y++
+	w.AttachChild(w.spinner, r)
 	return nil
 }
