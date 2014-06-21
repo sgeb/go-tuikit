@@ -50,26 +50,18 @@ func main() {
 //----------------------------------------------------------------------------
 
 type window struct {
-	*tuikit.BaseView
+	*tuikit.SplitLayout
 	textWidget *tuikit.TextWidget
 	spinner    *tuikit.ProgressSpinner
 }
 
 func newWindow() *window {
+	textWidget := tuikit.NewTextWidget()
+	spinner := tuikit.NewProgressSpinner()
 	w := &window{
-		BaseView:   tuikit.NewBaseView(),
-		textWidget: tuikit.NewTextWidget(),
-		spinner:    tuikit.NewProgressSpinner(),
+		SplitLayout: tuikit.NewSplitLayout(textWidget, spinner),
+		textWidget:  textWidget,
+		spinner:     spinner,
 	}
-	w.SetUpdateChildrenRect(w.updateChildrenRect)
 	return w
-}
-
-func (w *window) updateChildrenRect(rect tuikit.Rect) error {
-	r := rect
-	r.Y++
-	w.AttachChild(w.textWidget, r)
-	r.Y++
-	w.AttachChild(w.spinner, r)
-	return nil
 }
