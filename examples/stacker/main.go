@@ -42,11 +42,6 @@ func main() {
 
 type window struct {
 	*tuikit.LinearLayout
-
-	stack1 *stackBox
-	stack2 *stackBox
-	stack3 *stackBox
-	stack4 *stackBox
 }
 
 func newWindow() *window {
@@ -59,13 +54,7 @@ func newWindow() *window {
 	horizSplit.SetOrientation(tuikit.OrientationHorizontal)
 
 	children := []tuikit.Painter{stack1, stack2, horizSplit}
-	w := &window{
-		LinearLayout: tuikit.NewLinearLayout(children),
-		stack1:       stack1,
-		stack2:       stack2,
-		stack3:       stack3,
-		stack4:       stack4,
-	}
+	w := &window{tuikit.NewLinearLayout(children)}
 	return w
 }
 
