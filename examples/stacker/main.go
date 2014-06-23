@@ -46,18 +46,25 @@ type window struct {
 	stack1 *stackBox
 	stack2 *stackBox
 	stack3 *stackBox
+	stack4 *stackBox
 }
 
 func newWindow() *window {
 	stack1 := newStackBox(termbox.Cell{Bg: termbox.ColorBlue}, tuikit.NewSize(1, 5))
 	stack2 := newStackBox(termbox.Cell{Bg: termbox.ColorYellow}, tuikit.NewSize(1, 10))
-	stack3 := newStackBox(termbox.Cell{Bg: termbox.ColorRed}, tuikit.NewSize(1, 15))
-	children := []tuikit.Painter{stack1, stack2, stack3}
+
+	stack3 := newStackBox(termbox.Cell{Bg: termbox.ColorRed}, tuikit.NewSize(15, 15))
+	stack4 := newStackBox(termbox.Cell{Bg: termbox.ColorGreen}, tuikit.NewSize(15, 15))
+	horizSplit := tuikit.NewSplitLayout(stack3, stack4)
+	horizSplit.SetOrientation(tuikit.OrientationHorizontal)
+
+	children := []tuikit.Painter{stack1, stack2, horizSplit}
 	w := &window{
 		LinearLayout: tuikit.NewLinearLayout(children),
 		stack1:       stack1,
 		stack2:       stack2,
 		stack3:       stack3,
+		stack4:       stack4,
 	}
 	return w
 }
