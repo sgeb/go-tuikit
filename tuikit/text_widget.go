@@ -3,6 +3,8 @@ package tuikit
 import (
 	"unicode/utf8"
 
+	"math"
+
 	termbox "github.com/nsf/termbox-go"
 	"github.com/nsf/tulib"
 	log "github.com/sgeb/go-sglog"
@@ -271,7 +273,9 @@ func (v *TextWidget) PaintTo(buffer *tulib.Buffer, rect Rect) error {
 	log.Debug.Printf("Text: %v", v.text)
 
 	if v.cursorPainter != nil {
-		cursorPos := NewPoint(rect.X+v.cursorPos, rect.Y)
+		x := rect.X + v.cursorPos
+		x = int(math.Min(float64(x), float64(rect.Max().X)))
+		cursorPos := NewPoint(x, rect.Y)
 		v.cursorPainter(cursorPos)
 	}
 
