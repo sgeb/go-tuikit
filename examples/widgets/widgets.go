@@ -63,5 +63,6 @@ func newWindow() *window {
 		textWidget:  textWidget,
 		spinner:     spinner,
 	}
+	w.SetOrientation(tuikit.OrientationHorizontal)
 	return w
 }
