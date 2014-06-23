@@ -17,7 +17,7 @@ func NewProgressSpinner() *ProgressSpinner {
 
 	go func() {
 		l := len(ps.spinRunes)
-		for _ = range time.Tick(150 * time.Millisecond) {
+		for _ = range time.Tick(110 * time.Millisecond) {
 			ps.current = (ps.current + 1) % l
 			ps.SetText(string(ps.spinRunes[ps.current]))
 		}
