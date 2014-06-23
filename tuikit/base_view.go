@@ -36,10 +36,13 @@ func (v *BaseView) NeedResize() {
 }
 
 func (v *BaseView) AttachChild(child Painter, rect Rect) {
-	if r, ok := v.childrenRect[child]; ok {
-		if r.Eq(rect) {
-			return
-		}
+	if rect.Empty() {
+		v.DetachChild(child)
+		return
+	}
+
+	if r, ok := v.childrenRect[child]; ok && r.Eq(rect) {
+		return
 	}
 
 	child.SetPaintSubscriber(func() { v.ChildNeedsPaint(child) })
